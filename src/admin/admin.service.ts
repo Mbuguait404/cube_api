@@ -167,6 +167,22 @@ export class AdminService {
     return user;
   }
 
+  async deleteUser(id: string) {
+    const user = await this.userModel.findByIdAndDelete(id);
+    if (!user) throw new NotFoundException('User not found');
+    
+    // Decrement member count in communities the user belonged to
+    if (user.communities && user.communities.length > 0) {
+      await Promise.all(
+        user.communities.map((cId) =>
+          this.communitiesService.incrementMemberCount(cId.toString(), -1),
+        ),
+      );
+    }
+
+    return { message: 'User deleted successfully' };
+  }
+
   // ─── Badges ───────────────────────────────────────────────────────────────
 
   async createBadge(dto: CreateBadgeDto) {
@@ -262,8 +278,12 @@ export class AdminService {
 
   // ─── CMS Applications (pull from CMC) ────────────────────────────────────
 
-  async getCmsApplications(page = 1, limit = 20) {
-    return this.cmsBridgeService.getApplications({ page, limit });
+  async getCmsApplications(page = 1, limit = 20, search?: string, status?: string) {
+    return this.cmsBridgeService.getApplications({ page, limit, search, status });
+  }
+
+  async getCmsMemberships(page = 1, limit = 20, search?: string, status?: string) {
+    return this.cmsBridgeService.getMemberships({ page, limit, search, status });
   }
 
   async getCmsApplicationById(id: string) {

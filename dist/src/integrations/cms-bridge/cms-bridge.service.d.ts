@@ -17,6 +17,7 @@ export declare class CmsBridgeService {
     getApplications(params?: {
         page?: number;
         limit?: number;
+        search?: string;
         status?: string;
     }): Promise<{
         data: any;
@@ -30,6 +31,8 @@ export declare class CmsBridgeService {
     getMemberships(params?: {
         page?: number;
         limit?: number;
+        search?: string;
+        status?: string;
     }): Promise<{
         data: any;
         meta: {

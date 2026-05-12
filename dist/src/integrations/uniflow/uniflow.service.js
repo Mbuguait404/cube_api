@@ -35,7 +35,7 @@ let UniflowService = UniflowService_1 = class UniflowService {
     async sendApprovalEmail(email, fullName, tempPassword) {
         const frontendUrl = this.config.get('FRONTEND_URL') || 'http://localhost:4200';
         return this.send({
-            type: 'EMAIL',
+            type: 'email',
             to: email,
             subject: '🎉 Welcome to The Cube — Your Account is Ready',
             message: this.buildApprovalEmailHtml(fullName, tempPassword, frontendUrl),
@@ -44,21 +44,21 @@ let UniflowService = UniflowService_1 = class UniflowService {
     async sendPasswordResetEmail(email, fullName, token) {
         const frontendUrl = this.config.get('FRONTEND_URL') || 'http://localhost:4200';
         return this.send({
-            type: 'EMAIL',
+            type: 'email',
             to: email,
             subject: 'The Cube — Password Reset Request',
             message: this.buildPasswordResetHtml(fullName, token, frontendUrl),
         });
     }
     async sendBulkEmail(recipients, subject, message) {
-        const results = await Promise.allSettled(recipients.map((email) => this.send({ type: 'EMAIL', to: email, subject, message })));
+        const results = await Promise.allSettled(recipients.map((email) => this.send({ type: 'email', to: email, subject, message })));
         const sent = results.filter((r) => r.status === 'fulfilled').length;
         const failed = results.filter((r) => r.status === 'rejected').length;
         this.logger.log(`Bulk email: ${sent} sent, ${failed} failed`);
         return { sent, failed, total: recipients.length };
     }
     async sendSms(phone, message) {
-        return this.send({ type: 'SMS', to: phone, message });
+        return this.send({ type: 'sms', to: phone, message });
     }
     async send(payload) {
         try {

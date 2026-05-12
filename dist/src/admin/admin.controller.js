@@ -48,6 +48,9 @@ let AdminController = class AdminController {
     updateRole(id, role) {
         return this.adminService.updateUserRole(id, role);
     }
+    deleteUser(id) {
+        return this.adminService.deleteUser(id);
+    }
     assignCommunity(userId, dto) {
         return this.adminService.assignUserToCommunity(userId, dto.communityId);
     }
@@ -87,8 +90,11 @@ let AdminController = class AdminController {
     sendBulkEmail(dto) {
         return this.adminService.sendBulkEmail(dto);
     }
-    getCmsApplications(page = 1, limit = 20) {
-        return this.adminService.getCmsApplications(+page, +limit);
+    getCmsApplications(page = 1, limit = 20, search, status) {
+        return this.adminService.getCmsApplications(+page, +limit, search, status);
+    }
+    getCmsMemberships(page = 1, limit = 20, search, status) {
+        return this.adminService.getCmsMemberships(+page, +limit, search, status);
     }
     getCmsApplication(id) {
         return this.adminService.getCmsApplicationById(id);
@@ -149,6 +155,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], AdminController.prototype, "updateRole", null);
+__decorate([
+    (0, common_1.Delete)('users/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete a user' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "deleteUser", null);
 __decorate([
     (0, common_1.Post)('users/:id/communities'),
     (0, swagger_1.ApiOperation)({ summary: 'Assign user to a community' }),
@@ -264,12 +278,31 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Pull applications from CMC' }),
     (0, swagger_1.ApiQuery)({ name: 'page', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'search', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'status', required: false }),
     __param(0, (0, common_1.Query)('page')),
     __param(1, (0, common_1.Query)('limit')),
+    __param(2, (0, common_1.Query)('search')),
+    __param(3, (0, common_1.Query)('status')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object, Object, String, String]),
     __metadata("design:returntype", void 0)
 ], AdminController.prototype, "getCmsApplications", null);
+__decorate([
+    (0, common_1.Get)('cms/memberships'),
+    (0, swagger_1.ApiOperation)({ summary: 'Pull membership submissions from CMC' }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'search', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'status', required: false }),
+    __param(0, (0, common_1.Query)('page')),
+    __param(1, (0, common_1.Query)('limit')),
+    __param(2, (0, common_1.Query)('search')),
+    __param(3, (0, common_1.Query)('status')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object, String, String]),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "getCmsMemberships", null);
 __decorate([
     (0, common_1.Get)('cms/applications/:id'),
     (0, swagger_1.ApiOperation)({ summary: 'Get a specific CMC application by ID' }),

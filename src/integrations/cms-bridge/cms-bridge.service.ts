@@ -1,8 +1,9 @@
-import { Injectable, Logger, Inject, forwardRef, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import axios, { AxiosInstance } from 'axios';
+import * as bcrypt from 'bcryptjs';
 import { AuthService } from '../../auth/auth.service';
 import { User, UserDocument, UserRole, UserStatus } from '../../users/schemas/user.schema';
 
@@ -53,14 +54,19 @@ export class CmsBridgeService {
   // ─── Applications ─────────────────────────────────────────────────────────
 
   /** Pull membership/innovation-challenge applications from CMC */
-  async getApplications(params?: { page?: number; limit?: number; status?: string }) {
+  async getApplications(params?: { page?: number; limit?: number; search?: string; status?: string }) {
     try {
       const url = `${this.client.defaults.baseURL}/memberships`;
-      this.logger.log(`Fetching from CMS: ${url} (page: ${params?.page || 1}, limit: ${params?.limit || 50})...`);
+      this.logger.log(`Fetching from CMS: ${url} (page: ${params?.page || 1}, limit: ${params?.limit || 50}, search: ${params?.search}, status: ${params?.status})...`);
       const headers = await this.authHeaders();
       const { data } = await this.client.get('/memberships', {
         headers,
-        params: { page: params?.page || 1, limit: params?.limit || 50 },
+        params: { 
+          page: params?.page || 1, 
+          limit: params?.limit || 50,
+          search: params?.search,
+          status: params?.status === 'all' ? undefined : params?.status
+        },
       });
 
       this.logger.log(`Found ${data.total || 0} applications at /memberships.`);
@@ -86,14 +92,19 @@ export class CmsBridgeService {
   }
 
   /** Pull membership submissions from CMC */
-  async getMemberships(params?: { page?: number; limit?: number }) {
+  async getMemberships(params?: { page?: number; limit?: number; search?: string; status?: string }) {
     try {
       const url = `${this.client.defaults.baseURL}/memberships`;
-      this.logger.log(`Fetching from CMS: ${url} (page: ${params?.page || 1}, limit: ${params?.limit || 50})...`);
+      this.logger.log(`Fetching from CMS: ${url} (page: ${params?.page || 1}, limit: ${params?.limit || 50}, search: ${params?.search}, status: ${params?.status})...`);
       const headers = await this.authHeaders();
       const { data } = await this.client.get('/memberships', {
         headers,
-        params: { page: params?.page || 1, limit: params?.limit || 50 },
+        params: { 
+          page: params?.page || 1, 
+          limit: params?.limit || 50,
+          search: params?.search,
+          status: params?.status === 'all' ? undefined : params?.status
+        },
       });
 
       this.logger.log(`Found ${data.total || 0} memberships at /memberships.`);
@@ -146,6 +157,9 @@ export class CmsBridgeService {
       
     if (!application) throw new NotFoundException(`${type} not found in CMS`);
 
+    if (!application.email) {
+      throw new BadRequestException('Application is missing an email address');
+    }
     const email = application.email.toLowerCase();
     const existing = await this.userModel.findOne({ email });
     if (existing) {
@@ -153,19 +167,18 @@ export class CmsBridgeService {
     }
 
     // Handle name split if only 'name' is provided
-    let firstName = application.firstName || '';
-    let lastName = application.lastName || '';
-    if (!firstName && application.name) {
-      const parts = application.name.split(' ');
-      firstName = parts[0];
-      lastName = parts.slice(1).join(' ');
-    }
+    let firstName = application.firstName || application.name?.split(' ')[0] || 'Member';
+    let lastName = application.lastName || application.name?.split(' ').slice(1).join(' ') || 'User';
 
-    // Create the member account
+    // Create the member account with a temporary hashed password
+    // This will be immediately overwritten by sendTemporaryPassword below
+    const placeholderPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), 12);
+
     const user = await this.userModel.create({
       firstName,
       lastName,
       email,
+      password: placeholderPassword,
       phone: application.phone || '',
       institution: application.institution || application.organization || '',
       status: UserStatus.ACTIVE,

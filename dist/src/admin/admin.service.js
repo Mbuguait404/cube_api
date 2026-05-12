@@ -175,6 +175,15 @@ let AdminService = class AdminService {
             throw new common_1.NotFoundException('User not found');
         return user;
     }
+    async deleteUser(id) {
+        const user = await this.userModel.findByIdAndDelete(id);
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        if (user.communities && user.communities.length > 0) {
+            await Promise.all(user.communities.map((cId) => this.communitiesService.incrementMemberCount(cId.toString(), -1)));
+        }
+        return { message: 'User deleted successfully' };
+    }
     async createBadge(dto) {
         return this.badgesService.create(dto);
     }
@@ -241,8 +250,11 @@ let AdminService = class AdminService {
         }
         return this.uniflowService.sendBulkEmail(recipients, dto.subject, dto.message);
     }
-    async getCmsApplications(page = 1, limit = 20) {
-        return this.cmsBridgeService.getApplications({ page, limit });
+    async getCmsApplications(page = 1, limit = 20, search, status) {
+        return this.cmsBridgeService.getApplications({ page, limit, search, status });
+    }
+    async getCmsMemberships(page = 1, limit = 20, search, status) {
+        return this.cmsBridgeService.getMemberships({ page, limit, search, status });
     }
     async getCmsApplicationById(id) {
         return this.cmsBridgeService.getApplicationById(id);

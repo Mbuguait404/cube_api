@@ -1,10 +1,43 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
@@ -22,6 +55,7 @@ const config_1 = require("@nestjs/config");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const axios_1 = __importDefault(require("axios"));
+const bcrypt = __importStar(require("bcryptjs"));
 const auth_service_1 = require("../../auth/auth.service");
 const user_schema_1 = require("../../users/schemas/user.schema");
 let CmsBridgeService = CmsBridgeService_1 = class CmsBridgeService {
@@ -65,11 +99,16 @@ let CmsBridgeService = CmsBridgeService_1 = class CmsBridgeService {
     async getApplications(params) {
         try {
             const url = `${this.client.defaults.baseURL}/memberships`;
-            this.logger.log(`Fetching from CMS: ${url} (page: ${params?.page || 1}, limit: ${params?.limit || 50})...`);
+            this.logger.log(`Fetching from CMS: ${url} (page: ${params?.page || 1}, limit: ${params?.limit || 50}, search: ${params?.search}, status: ${params?.status})...`);
             const headers = await this.authHeaders();
             const { data } = await this.client.get('/memberships', {
                 headers,
-                params: { page: params?.page || 1, limit: params?.limit || 50 },
+                params: {
+                    page: params?.page || 1,
+                    limit: params?.limit || 50,
+                    search: params?.search,
+                    status: params?.status === 'all' ? undefined : params?.status
+                },
             });
             this.logger.log(`Found ${data.total || 0} applications at /memberships.`);
             return {
@@ -95,11 +134,16 @@ let CmsBridgeService = CmsBridgeService_1 = class CmsBridgeService {
     async getMemberships(params) {
         try {
             const url = `${this.client.defaults.baseURL}/memberships`;
-            this.logger.log(`Fetching from CMS: ${url} (page: ${params?.page || 1}, limit: ${params?.limit || 50})...`);
+            this.logger.log(`Fetching from CMS: ${url} (page: ${params?.page || 1}, limit: ${params?.limit || 50}, search: ${params?.search}, status: ${params?.status})...`);
             const headers = await this.authHeaders();
             const { data } = await this.client.get('/memberships', {
                 headers,
-                params: { page: params?.page || 1, limit: params?.limit || 50 },
+                params: {
+                    page: params?.page || 1,
+                    limit: params?.limit || 50,
+                    search: params?.search,
+                    status: params?.status === 'all' ? undefined : params?.status
+                },
             });
             this.logger.log(`Found ${data.total || 0} memberships at /memberships.`);
             return {
@@ -149,22 +193,22 @@ let CmsBridgeService = CmsBridgeService_1 = class CmsBridgeService {
             : await this.getMembershipById(id);
         if (!application)
             throw new common_1.NotFoundException(`${type} not found in CMS`);
+        if (!application.email) {
+            throw new common_1.BadRequestException('Application is missing an email address');
+        }
         const email = application.email.toLowerCase();
         const existing = await this.userModel.findOne({ email });
         if (existing) {
             throw new common_1.ConflictException(`User with email ${email} already exists`);
         }
-        let firstName = application.firstName || '';
-        let lastName = application.lastName || '';
-        if (!firstName && application.name) {
-            const parts = application.name.split(' ');
-            firstName = parts[0];
-            lastName = parts.slice(1).join(' ');
-        }
+        let firstName = application.firstName || application.name?.split(' ')[0] || 'Member';
+        let lastName = application.lastName || application.name?.split(' ').slice(1).join(' ') || 'User';
+        const placeholderPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), 12);
         const user = await this.userModel.create({
             firstName,
             lastName,
             email,
+            password: placeholderPassword,
             phone: application.phone || '',
             institution: application.institution || application.organization || '',
             status: user_schema_1.UserStatus.ACTIVE,

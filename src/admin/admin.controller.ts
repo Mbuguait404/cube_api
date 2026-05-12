@@ -88,6 +88,12 @@ export class AdminController {
     return this.adminService.updateUserRole(id, role);
   }
 
+  @Delete('users/:id')
+  @ApiOperation({ summary: 'Delete a user' })
+  deleteUser(@Param('id') id: string) {
+    return this.adminService.deleteUser(id);
+  }
+
   // ─── Community Assignment ─────────────────────────────────────────────────
 
   @Post('users/:id/communities')
@@ -200,11 +206,30 @@ export class AdminController {
   @ApiOperation({ summary: 'Pull applications from CMC' })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'status', required: false })
   getCmsApplications(
     @Query('page') page = 1,
     @Query('limit') limit = 20,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
   ) {
-    return this.adminService.getCmsApplications(+page, +limit);
+    return this.adminService.getCmsApplications(+page, +limit, search, status);
+  }
+
+  @Get('cms/memberships')
+  @ApiOperation({ summary: 'Pull membership submissions from CMC' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'status', required: false })
+  getCmsMemberships(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.adminService.getCmsMemberships(+page, +limit, search, status);
   }
 
   @Get('cms/applications/:id')

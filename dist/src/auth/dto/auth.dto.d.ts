@@ -3,7 +3,7 @@ export declare class LoginDto {
     password: string;
 }
 export declare class ResetPasswordDto {
-    currentPassword: string;
+    currentPassword?: string;
     newPassword: string;
 }
 export declare class ForgotPasswordDto {

@@ -19,10 +19,10 @@ export class LoginDto {
 }
 
 export class ResetPasswordDto {
-  @ApiProperty({ description: 'Current or temporary password' })
+  @ApiPropertyOptional({ description: 'Current or temporary password' })
   @IsString()
-  @IsNotEmpty()
-  currentPassword: string;
+  @IsOptional()
+  currentPassword?: string;
 
   @ApiProperty({ description: 'New password (min 8 chars)', minLength: 8 })
   @IsString()

@@ -88,6 +88,9 @@ export declare class AdminService {
     } & {
         id: string;
     }>;
+    deleteUser(id: string): Promise<{
+        message: string;
+    }>;
     createBadge(dto: CreateBadgeDto): Promise<import("../badges/schemas/badge.schema").BadgeDocument>;
     listBadges(): Promise<import("../badges/schemas/badge.schema").BadgeDocument[]>;
     assignBadgeToUser(userId: string, badgeId: string): Promise<import("mongoose").Document<unknown, {}, UserDocument, {}, import("mongoose").DefaultSchemaOptions> & User & import("mongoose").Document<Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
@@ -129,7 +132,16 @@ export declare class AdminService {
         failed: number;
         total: number;
     }>;
-    getCmsApplications(page?: number, limit?: number): Promise<{
+    getCmsApplications(page?: number, limit?: number, search?: string, status?: string): Promise<{
+        data: any;
+        meta: {
+            total: any;
+            page: any;
+            limit: any;
+            totalPages: any;
+        };
+    }>;
+    getCmsMemberships(page?: number, limit?: number, search?: string, status?: string): Promise<{
         data: any;
         meta: {
             total: any;

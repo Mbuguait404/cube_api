@@ -67,6 +67,9 @@ export declare class AdminController {
     } & {
         id: string;
     }>;
+    deleteUser(id: string): Promise<{
+        message: string;
+    }>;
     assignCommunity(userId: string, dto: AssignCommunityDto): Promise<import("mongoose").Document<unknown, {}, import("../users/schemas/user.schema").UserDocument, {}, import("mongoose").DefaultSchemaOptions> & import("../users/schemas/user.schema").User & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
@@ -108,7 +111,16 @@ export declare class AdminController {
         failed: number;
         total: number;
     }>;
-    getCmsApplications(page?: number, limit?: number): Promise<{
+    getCmsApplications(page?: number, limit?: number, search?: string, status?: string): Promise<{
+        data: any;
+        meta: {
+            total: any;
+            page: any;
+            limit: any;
+            totalPages: any;
+        };
+    }>;
+    getCmsMemberships(page?: number, limit?: number, search?: string, status?: string): Promise<{
         data: any;
         meta: {
             total: any;

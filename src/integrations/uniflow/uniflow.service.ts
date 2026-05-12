@@ -30,7 +30,7 @@ export class UniflowService {
       this.config.get('FRONTEND_URL') || 'http://localhost:4200';
 
     return this.send({
-      type: 'EMAIL',
+      type: 'email',
       to: email,
       subject: '🎉 Welcome to The Cube — Your Account is Ready',
       message: this.buildApprovalEmailHtml(fullName, tempPassword, frontendUrl),
@@ -42,7 +42,7 @@ export class UniflowService {
       this.config.get('FRONTEND_URL') || 'http://localhost:4200';
 
     return this.send({
-      type: 'EMAIL',
+      type: 'email',
       to: email,
       subject: 'The Cube — Password Reset Request',
       message: this.buildPasswordResetHtml(fullName, token, frontendUrl),
@@ -54,7 +54,7 @@ export class UniflowService {
   async sendBulkEmail(recipients: string[], subject: string, message: string) {
     const results = await Promise.allSettled(
       recipients.map((email) =>
-        this.send({ type: 'EMAIL', to: email, subject, message }),
+        this.send({ type: 'email', to: email, subject, message }),
       ),
     );
 
@@ -68,13 +68,13 @@ export class UniflowService {
   // ─── SMS ──────────────────────────────────────────────────────────────────
 
   async sendSms(phone: string, message: string) {
-    return this.send({ type: 'SMS', to: phone, message });
+    return this.send({ type: 'sms', to: phone, message });
   }
 
   // ─── Core sender ─────────────────────────────────────────────────────────
 
   private async send(payload: {
-    type: 'EMAIL' | 'SMS' | 'WHATSAPP';
+    type: 'email' | 'sms' | 'whatsapp' | 'push' | 'system';
     to: string;
     message: string;
     subject?: string;

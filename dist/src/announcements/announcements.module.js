@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const announcements_service_1 = require("./announcements.service");
 const announcement_schema_1 = require("./schemas/announcement.schema");
+const announcements_controller_1 = require("./announcements.controller");
 let AnnouncementsModule = class AnnouncementsModule {
 };
 exports.AnnouncementsModule = AnnouncementsModule;
@@ -21,6 +22,7 @@ exports.AnnouncementsModule = AnnouncementsModule = __decorate([
                 { name: announcement_schema_1.Announcement.name, schema: announcement_schema_1.AnnouncementSchema },
             ]),
         ],
+        controllers: [announcements_controller_1.AnnouncementsController],
         providers: [announcements_service_1.AnnouncementsService],
         exports: [announcements_service_1.AnnouncementsService],
     })

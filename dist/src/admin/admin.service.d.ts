@@ -157,6 +157,12 @@ export declare class AdminService {
         email: string;
         tempPassword: string;
     }>;
+    importCmsMembership(id: string): Promise<{
+        success: boolean;
+        userId: Types.ObjectId;
+        email: string;
+        tempPassword: string;
+    }>;
     getDashboardStats(): Promise<{
         totalMembers: number;
         active: number;

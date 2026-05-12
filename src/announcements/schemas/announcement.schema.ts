@@ -20,9 +20,9 @@ export class Announcement {
   @Prop()
   ctaLabel: string;
 
-  /** null = broadcast to all; otherwise scoped to specific communities */
+  /** null or empty = broadcast to all; otherwise scoped to specific communities */
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Community' }] })
-  targetCommunities: Types.ObjectId[];
+  targetCommunityIds: Types.ObjectId[];
 
   @Prop({ default: true })
   isActive: boolean;

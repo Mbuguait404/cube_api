@@ -136,4 +136,10 @@ export declare class AdminController {
         email: string;
         tempPassword: string;
     }>;
+    importCmsMembership(id: string): Promise<{
+        success: boolean;
+        userId: import("mongoose").Types.ObjectId;
+        email: string;
+        tempPassword: string;
+    }>;
 }

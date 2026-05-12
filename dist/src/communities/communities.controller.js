@@ -17,6 +17,10 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const communities_service_1 = require("./communities.service");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
+const roles_guard_1 = require("../common/guards/roles.guard");
+const roles_decorator_1 = require("../common/decorators/roles.decorator");
+const user_schema_1 = require("../users/schemas/user.schema");
+const create_community_dto_1 = require("./dto/create-community.dto");
 let CommunitiesController = class CommunitiesController {
     communitiesService;
     constructor(communitiesService) {
@@ -27,6 +31,15 @@ let CommunitiesController = class CommunitiesController {
     }
     findOne(id) {
         return this.communitiesService.findById(id);
+    }
+    create(dto) {
+        return this.communitiesService.create(dto);
+    }
+    update(id, dto) {
+        return this.communitiesService.update(id, dto);
+    }
+    remove(id) {
+        return this.communitiesService.delete(id);
     }
 };
 exports.CommunitiesController = CommunitiesController;
@@ -45,10 +58,38 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], CommunitiesController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Post)(),
+    (0, roles_decorator_1.Roles)(user_schema_1.UserRole.ADMIN, user_schema_1.UserRole.SUPER_ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a new community group' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_community_dto_1.CreateCommunityDto]),
+    __metadata("design:returntype", void 0)
+], CommunitiesController.prototype, "create", null);
+__decorate([
+    (0, common_1.Patch)(':id'),
+    (0, roles_decorator_1.Roles)(user_schema_1.UserRole.ADMIN, user_schema_1.UserRole.SUPER_ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Update community details' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], CommunitiesController.prototype, "update", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, roles_decorator_1.Roles)(user_schema_1.UserRole.ADMIN, user_schema_1.UserRole.SUPER_ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete a community' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CommunitiesController.prototype, "remove", null);
 exports.CommunitiesController = CommunitiesController = __decorate([
     (0, swagger_1.ApiTags)('Communities'),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, common_1.Controller)('communities'),
     __metadata("design:paramtypes", [communities_service_1.CommunitiesService])
 ], CommunitiesController);

@@ -41,7 +41,7 @@ export class CreateAnnouncementDto {
   })
   @IsOptional()
   @IsArray()
-  targetCommunities?: string[];
+  targetCommunityIds?: string[];
 
   @ApiPropertyOptional({ example: '2025-12-31T23:59:59.000Z' })
   @IsOptional()

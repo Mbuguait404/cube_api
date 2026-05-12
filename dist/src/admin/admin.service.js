@@ -260,7 +260,10 @@ let AdminService = class AdminService {
         return this.cmsBridgeService.getApplicationById(id);
     }
     async importCmsApplication(id) {
-        return this.cmsBridgeService.importApplication(id);
+        return this.cmsBridgeService.importApplication(id, 'admission');
+    }
+    async importCmsMembership(id) {
+        return this.cmsBridgeService.importApplication(id, 'membership');
     }
     async getDashboardStats() {
         const [totalMembers, active, pending, inactive] = await Promise.all([

@@ -23,15 +23,20 @@ let AnnouncementsService = class AnnouncementsService {
         this.announcementModel = announcementModel;
     }
     async create(dto, createdById) {
+        const { targetCommunityIds, ...rest } = dto;
+        const finalTargetIds = (targetCommunityIds?.includes('all') || !targetCommunityIds)
+            ? []
+            : targetCommunityIds;
         return this.announcementModel.create({
-            ...dto,
+            ...rest,
+            targetCommunityIds: finalTargetIds,
             createdBy: new mongoose_2.Types.ObjectId(createdById),
         });
     }
     async findAll() {
         return this.announcementModel
             .find()
-            .populate('targetCommunities', 'name tag')
+            .populate('targetCommunityIds', 'name tag')
             .populate('createdBy', 'firstName lastName')
             .sort({ createdAt: -1 })
             .exec();
@@ -50,8 +55,8 @@ let AnnouncementsService = class AnnouncementsService {
                 },
                 {
                     $or: [
-                        { targetCommunities: { $size: 0 } },
-                        { targetCommunities: { $elemMatch: { $in: communityIds } } },
+                        { targetCommunityIds: { $size: 0 } },
+                        { targetCommunityIds: { $elemMatch: { $in: communityIds } } },
                     ],
                 },
             ],

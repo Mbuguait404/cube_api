@@ -18,8 +18,16 @@ export class AnnouncementsService {
     dto: CreateAnnouncementDto,
     createdById: string,
   ): Promise<AnnouncementDocument> {
+    const { targetCommunityIds, ...rest } = dto;
+    
+    // If "all" is present or array is empty, target everyone (empty array in DB)
+    const finalTargetIds = (targetCommunityIds?.includes('all') || !targetCommunityIds) 
+      ? [] 
+      : targetCommunityIds;
+
     return this.announcementModel.create({
-      ...dto,
+      ...rest,
+      targetCommunityIds: finalTargetIds,
       createdBy: new Types.ObjectId(createdById),
     });
   }
@@ -27,7 +35,7 @@ export class AnnouncementsService {
   async findAll(): Promise<AnnouncementDocument[]> {
     return this.announcementModel
       .find()
-      .populate('targetCommunities', 'name tag')
+      .populate('targetCommunityIds', 'name tag')
       .populate('createdBy', 'firstName lastName')
       .sort({ createdAt: -1 })
       .exec();
@@ -55,8 +63,8 @@ export class AnnouncementsService {
           },
           {
             $or: [
-              { targetCommunities: { $size: 0 } },
-              { targetCommunities: { $elemMatch: { $in: communityIds } } },
+              { targetCommunityIds: { $size: 0 } },
+              { targetCommunityIds: { $elemMatch: { $in: communityIds } } },
             ],
           },
         ],

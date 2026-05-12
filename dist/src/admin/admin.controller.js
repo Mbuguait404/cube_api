@@ -102,6 +102,9 @@ let AdminController = class AdminController {
     importCmsApplication(id) {
         return this.adminService.importCmsApplication(id);
     }
+    importCmsMembership(id) {
+        return this.adminService.importCmsMembership(id);
+    }
 };
 exports.AdminController = AdminController;
 __decorate([
@@ -319,6 +322,14 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AdminController.prototype, "importCmsApplication", null);
+__decorate([
+    (0, common_1.Post)('cms/memberships/:id/import'),
+    (0, swagger_1.ApiOperation)({ summary: 'Import a CMS membership into the Hub as a member' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "importCmsMembership", null);
 exports.AdminController = AdminController = __decorate([
     (0, swagger_1.ApiTags)('Admin'),
     (0, swagger_1.ApiBearerAuth)(),

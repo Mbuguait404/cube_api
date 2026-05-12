@@ -4,6 +4,6 @@ export declare class CreateAnnouncementDto {
     imageUrl?: string;
     ctaUrl?: string;
     ctaLabel?: string;
-    targetCommunities?: string[];
+    targetCommunityIds?: string[];
     expiresAt?: string;
 }

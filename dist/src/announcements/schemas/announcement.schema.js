@@ -18,7 +18,7 @@ let Announcement = class Announcement {
     imageUrl;
     ctaUrl;
     ctaLabel;
-    targetCommunities;
+    targetCommunityIds;
     isActive;
     expiresAt;
     createdBy;
@@ -47,7 +47,7 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ type: [{ type: mongoose_2.Types.ObjectId, ref: 'Community' }] }),
     __metadata("design:type", Array)
-], Announcement.prototype, "targetCommunities", void 0);
+], Announcement.prototype, "targetCommunityIds", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ default: true }),
     __metadata("design:type", Boolean)

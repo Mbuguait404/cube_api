@@ -23,7 +23,8 @@ async function bootstrap() {
       config.get('FRONTEND_URL') || 'http://localhost:4200',
       'http://localhost:3000',
       'http://localhost:5173',
-      'http://localhost:8080'
+      'http://localhost:8080',
+      'https://cube-hub-website.vercel.app'
     ],
     credentials: true,
   });

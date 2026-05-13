@@ -154,7 +154,11 @@ export class AdminProjectsController {
 @UseGuards(JwtAuthGuard)
 @Controller('member/projects')
 export class MemberProjectsController {
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(
+    private readonly projectsService: ProjectsService,
+    private readonly tasksService: TasksService,
+    private readonly reportsService: DailyReportsService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get my assigned projects' })
@@ -167,5 +171,23 @@ export class MemberProjectsController {
   @ApiParam({ name: 'id' })
   getProjectDetail(@Param('id') id: string, @CurrentUser() user: any) {
     return this.projectsService.findByIdForMember(id, user._id.toString());
+  }
+
+  @Get(':id/tasks')
+  @ApiOperation({ summary: 'Get all tasks in a project' })
+  @ApiParam({ name: 'id' })
+  async getProjectTasks(@Param('id') projectId: string, @CurrentUser() user: any) {
+    // Verify membership
+    await this.projectsService.findByIdForMember(projectId, user._id.toString());
+    return this.tasksService.findByProject(projectId);
+  }
+
+  @Get(':id/daily-reports')
+  @ApiOperation({ summary: 'Get all daily reports for a project' })
+  @ApiParam({ name: 'id' })
+  async getProjectReports(@Param('id') projectId: string, @CurrentUser() user: any) {
+    // Verify membership
+    await this.projectsService.findByIdForMember(projectId, user._id.toString());
+    return this.reportsService.findAll({ projectId });
   }
 }

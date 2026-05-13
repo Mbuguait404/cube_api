@@ -24,7 +24,11 @@ export declare class AdminProjectsController {
 }
 export declare class MemberProjectsController {
     private readonly projectsService;
-    constructor(projectsService: ProjectsService);
+    private readonly tasksService;
+    private readonly reportsService;
+    constructor(projectsService: ProjectsService, tasksService: TasksService, reportsService: DailyReportsService);
     getMyProjects(user: any): Promise<import("./schemas/project.schema").ProjectDocument[]>;
     getProjectDetail(id: string, user: any): Promise<import("./schemas/project.schema").ProjectDocument>;
+    getProjectTasks(projectId: string, user: any): Promise<import("../tasks/schemas/task.schema").TaskDocument[]>;
+    getProjectReports(projectId: string, user: any): Promise<import("../daily-reports/schemas/daily-report.schema").DailyReportDocument[]>;
 }

@@ -18,6 +18,7 @@ import { DailyReportsModule } from './daily-reports/daily-reports.module';
 import { CommentsModule } from './comments/comments.module';
 import { LogsModule } from './logs/logs.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
     DailyReportsModule,
     CommentsModule,
     LogsModule,
+    ChatModule,
   ],
   providers: [
     {

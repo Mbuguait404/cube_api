@@ -198,14 +198,26 @@ exports.AdminProjectsController = AdminProjectsController = __decorate([
 ], AdminProjectsController);
 let MemberProjectsController = class MemberProjectsController {
     projectsService;
-    constructor(projectsService) {
+    tasksService;
+    reportsService;
+    constructor(projectsService, tasksService, reportsService) {
         this.projectsService = projectsService;
+        this.tasksService = tasksService;
+        this.reportsService = reportsService;
     }
     getMyProjects(user) {
         return this.projectsService.findByMember(user._id.toString());
     }
     getProjectDetail(id, user) {
         return this.projectsService.findByIdForMember(id, user._id.toString());
+    }
+    async getProjectTasks(projectId, user) {
+        await this.projectsService.findByIdForMember(projectId, user._id.toString());
+        return this.tasksService.findByProject(projectId);
+    }
+    async getProjectReports(projectId, user) {
+        await this.projectsService.findByIdForMember(projectId, user._id.toString());
+        return this.reportsService.findAll({ projectId });
     }
 };
 exports.MemberProjectsController = MemberProjectsController;
@@ -227,11 +239,33 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], MemberProjectsController.prototype, "getProjectDetail", null);
+__decorate([
+    (0, common_1.Get)(':id/tasks'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get all tasks in a project' }),
+    (0, swagger_1.ApiParam)({ name: 'id' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], MemberProjectsController.prototype, "getProjectTasks", null);
+__decorate([
+    (0, common_1.Get)(':id/daily-reports'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get all daily reports for a project' }),
+    (0, swagger_1.ApiParam)({ name: 'id' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], MemberProjectsController.prototype, "getProjectReports", null);
 exports.MemberProjectsController = MemberProjectsController = __decorate([
     (0, swagger_1.ApiTags)('Member / Projects'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('member/projects'),
-    __metadata("design:paramtypes", [projects_service_1.ProjectsService])
+    __metadata("design:paramtypes", [projects_service_1.ProjectsService,
+        tasks_service_1.TasksService,
+        daily_reports_service_1.DailyReportsService])
 ], MemberProjectsController);
 //# sourceMappingURL=projects.controller.js.map

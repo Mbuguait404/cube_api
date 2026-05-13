@@ -27,6 +27,7 @@ const daily_reports_module_1 = require("./daily-reports/daily-reports.module");
 const comments_module_1 = require("./comments/comments.module");
 const logs_module_1 = require("./logs/logs.module");
 const logging_interceptor_1 = require("./common/interceptors/logging.interceptor");
+const chat_module_1 = require("./chat/chat.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -55,6 +56,7 @@ exports.AppModule = AppModule = __decorate([
             daily_reports_module_1.DailyReportsModule,
             comments_module_1.CommentsModule,
             logs_module_1.LogsModule,
+            chat_module_1.ChatModule,
         ],
         providers: [
             {

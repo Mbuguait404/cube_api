@@ -51,6 +51,7 @@ class UpdateProfileDto {
     designation;
     profilePhoto;
     address;
+    extendedProfile;
 }
 exports.UpdateProfileDto = UpdateProfileDto;
 __decorate([
@@ -97,4 +98,10 @@ __decorate([
     (0, class_transformer_1.Type)(() => AddressDto),
     __metadata("design:type", AddressDto)
 ], UpdateProfileDto.prototype, "address", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ type: Object, description: 'Extended profile (Section 2)' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsObject)(),
+    __metadata("design:type", Object)
+], UpdateProfileDto.prototype, "extendedProfile", void 0);
 //# sourceMappingURL=update-profile.dto.js.map

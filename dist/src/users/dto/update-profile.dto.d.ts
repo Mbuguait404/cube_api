@@ -12,5 +12,6 @@ export declare class UpdateProfileDto {
     designation?: string;
     profilePhoto?: string;
     address?: AddressDto;
+    extendedProfile?: Record<string, any>;
 }
 export {};

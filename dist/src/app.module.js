@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
+const core_1 = require("@nestjs/core");
 const config_1 = require("@nestjs/config");
 const mongoose_1 = require("@nestjs/mongoose");
 const auth_module_1 = require("./auth/auth.module");
@@ -19,6 +20,13 @@ const announcements_module_1 = require("./announcements/announcements.module");
 const cms_bridge_module_1 = require("./integrations/cms-bridge/cms-bridge.module");
 const uniflow_module_1 = require("./integrations/uniflow/uniflow.module");
 const webhooks_module_1 = require("./webhooks/webhooks.module");
+const programs_module_1 = require("./programs/programs.module");
+const projects_module_1 = require("./projects/projects.module");
+const tasks_module_1 = require("./tasks/tasks.module");
+const daily_reports_module_1 = require("./daily-reports/daily-reports.module");
+const comments_module_1 = require("./comments/comments.module");
+const logs_module_1 = require("./logs/logs.module");
+const logging_interceptor_1 = require("./common/interceptors/logging.interceptor");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -41,6 +49,18 @@ exports.AppModule = AppModule = __decorate([
             cms_bridge_module_1.CmsBridgeModule,
             uniflow_module_1.UniflowModule,
             webhooks_module_1.WebhooksModule,
+            programs_module_1.ProgramsModule,
+            projects_module_1.ProjectsModule,
+            tasks_module_1.TasksModule,
+            daily_reports_module_1.DailyReportsModule,
+            comments_module_1.CommentsModule,
+            logs_module_1.LogsModule,
+        ],
+        providers: [
+            {
+                provide: core_1.APP_INTERCEPTOR,
+                useClass: logging_interceptor_1.LoggingInterceptor,
+            },
         ],
     })
 ], AppModule);

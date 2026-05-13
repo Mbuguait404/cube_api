@@ -49,7 +49,12 @@ export class UsersService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    Object.assign(user, dto);
+    // Only merge defined fields from DTO to avoid overwriting existing data with undefined
+    Object.entries(dto).forEach(([key, value]) => {
+      if (value !== undefined) {
+        user[key] = value;
+      }
+    });
 
     // Recalculate completion %
     user.profileCompletion = calculateProfileCompletion(user.toObject());

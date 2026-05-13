@@ -33,23 +33,38 @@ export class AuthService {
     const isMatch = await bcrypt.compare(dto.password, user.password);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
 
+    // Check if temporary password has expired
+    if (user.mustChangePassword && user.tempPasswordExpiry && new Date() > user.tempPasswordExpiry) {
+      throw new UnauthorizedException('Temporary password has expired. Please contact an admin for a reset.');
+    }
+
     const tokens = await this.generateTokens(
       user._id.toString(),
       user.email,
       user.role,
     );
 
+    // Populate communities and badges for the frontend
+    await user.populate([
+      { path: 'communities', select: 'name tag slug' },
+      { path: 'badges', select: 'name iconUrl color description' },
+    ]);
+
     return {
       ...tokens,
       mustChangePassword: user.mustChangePassword,
       user: {
-        id: user._id,
+        _id: user._id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
         profilePhoto: user.profilePhoto,
         profileCompletion: user.profileCompletion,
+        mustChangePassword: user.mustChangePassword,
+        tempPasswordExpiry: user.tempPasswordExpiry,
+        communities: user.communities || [],
+        badges: user.badges || [],
       },
     };
   }
@@ -59,9 +74,14 @@ export class AuthService {
     const user = await this.usersService.findByIdWithPassword(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    const isMatch = await bcrypt.compare(dto.currentPassword, user.password);
-    if (!isMatch)
-      throw new BadRequestException('Current password is incorrect');
+    // Only require current password if they AREN'T in the "must change" state (e.g. regular security update)
+    if (!user.mustChangePassword) {
+      if (!dto.currentPassword) {
+        throw new BadRequestException('Current password is required');
+      }
+      const isMatch = await bcrypt.compare(dto.currentPassword, user.password);
+      if (!isMatch) throw new BadRequestException('Current password is incorrect');
+    }
 
     const hashed = await bcrypt.hash(dto.newPassword, 12);
     await this.usersService.updatePassword(userId, hashed);

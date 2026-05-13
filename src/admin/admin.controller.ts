@@ -243,4 +243,10 @@ export class AdminController {
   importCmsApplication(@Param('id') id: string) {
     return this.adminService.importCmsApplication(id);
   }
+
+  @Post('cms/memberships/:id/import')
+  @ApiOperation({ summary: 'Import a CMS membership into the Hub as a member' })
+  importCmsMembership(@Param('id') id: string) {
+    return this.adminService.importCmsMembership(id);
+  }
 }

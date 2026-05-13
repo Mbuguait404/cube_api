@@ -69,15 +69,34 @@ export class CmsBridgeService {
         },
       });
 
-      this.logger.log(`Found ${data.total || 0} applications at /memberships.`);
+      const cmsItems = data.data || [];
+      const emails = cmsItems.map((i: any) => i.email?.toLowerCase()).filter(Boolean);
+      const cmsIds = cmsItems.map((i: any) => i._id || i.id).filter(Boolean);
+
+      const existingUsers = await this.userModel.find({
+        $or: [
+          { email: { $in: emails } },
+          { cmsApplicationId: { $in: cmsIds } }
+        ]
+      }).select('email cmsApplicationId').exec();
+
+      const existingEmails = new Set(existingUsers.map(u => u.email.toLowerCase()));
+      const existingCmsIds = new Set(existingUsers.map(u => u.cmsApplicationId));
+
       // Normalize to Hub's PaginatedResponse structure
       return {
-        data: (data.data || []).map((item: any) => ({
-          ...item,
-          firstName: item.firstName || item.name?.split(' ')[0] || '',
-          lastName: item.lastName || item.name?.split(' ').slice(1).join(' ') || '',
-          appliedAt: item.appliedAt || item.createdAt || new Date().toISOString(),
-        })),
+        data: cmsItems.map((item: any) => {
+          const itemId = item._id || item.id;
+          const isImported = existingEmails.has(item.email?.toLowerCase()) || (itemId && existingCmsIds.has(itemId));
+          
+          return {
+            ...item,
+            firstName: item.firstName || item.name?.split(' ')[0] || '',
+            lastName: item.lastName || item.name?.split(' ').slice(1).join(' ') || '',
+            appliedAt: item.appliedAt || item.createdAt || new Date().toISOString(),
+            isImported,
+          };
+        }),
         meta: {
           total: data.total || 0,
           page: data.page || 1,
@@ -107,13 +126,33 @@ export class CmsBridgeService {
         },
       });
 
+      const cmsItems = data.data || [];
+      const emails = cmsItems.map((i: any) => i.email?.toLowerCase()).filter(Boolean);
+      const cmsIds = cmsItems.map((i: any) => i._id || i.id).filter(Boolean);
+
+      const existingUsers = await this.userModel.find({
+        $or: [
+          { email: { $in: emails } },
+          { cmsApplicationId: { $in: cmsIds } }
+        ]
+      }).select('email cmsApplicationId').exec();
+
+      const existingEmails = new Set(existingUsers.map(u => u.email.toLowerCase()));
+      const existingCmsIds = new Set(existingUsers.map(u => u.cmsApplicationId));
+
       this.logger.log(`Found ${data.total || 0} memberships at /memberships.`);
       return {
-        data: (data.data || []).map((item: any) => ({
-          ...item,
-          firstName: item.firstName || item.name?.split(' ')[0] || '',
-          lastName: item.lastName || item.name?.split(' ').slice(1).join(' ') || '',
-        })),
+        data: cmsItems.map((item: any) => {
+          const itemId = item._id || item.id;
+          const isImported = existingEmails.has(item.email?.toLowerCase()) || (itemId && existingCmsIds.has(itemId));
+          
+          return {
+            ...item,
+            firstName: item.firstName || item.name?.split(' ')[0] || '',
+            lastName: item.lastName || item.name?.split(' ').slice(1).join(' ') || '',
+            isImported,
+          };
+        }),
         meta: {
           total: data.total || 0,
           page: data.page || 1,
@@ -185,6 +224,7 @@ export class CmsBridgeService {
       role: UserRole.MEMBER,
       mustChangePassword: true,
       isFirstLogin: true,
+      cmsApplicationId: id,
     });
 
     // Generate and send temporary password via email

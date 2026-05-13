@@ -18,7 +18,7 @@ class CreateAnnouncementDto {
     imageUrl;
     ctaUrl;
     ctaLabel;
-    targetCommunities;
+    targetCommunityIds;
     expiresAt;
 }
 exports.CreateAnnouncementDto = CreateAnnouncementDto;
@@ -60,7 +60,7 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
     __metadata("design:type", Array)
-], CreateAnnouncementDto.prototype, "targetCommunities", void 0);
+], CreateAnnouncementDto.prototype, "targetCommunityIds", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: '2025-12-31T23:59:59.000Z' }),
     (0, class_validator_1.IsOptional)(),

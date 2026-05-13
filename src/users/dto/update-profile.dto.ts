@@ -1,10 +1,11 @@
 import {
   IsString,
-  IsEmail,
   IsOptional,
   IsObject,
   ValidateNested,
-  IsPhoneNumber,
+  IsNumber,
+  IsBoolean,
+  IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -17,6 +18,7 @@ class AddressDto {
 }
 
 export class UpdateProfileDto {
+  // ─── Section 1: Basic Info ────────────────────────────────────────────────
   @ApiPropertyOptional() @IsOptional() @IsString() firstName?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() lastName?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() phone?: string;
@@ -30,4 +32,14 @@ export class UpdateProfileDto {
   @ValidateNested()
   @Type(() => AddressDto)
   address?: AddressDto;
+
+  // ─── Section 2: Extended Profile ─────────────────────────────────────────
+  /**
+   * Free-form extended profile object. All sub-fields are optional.
+   * The full structure is defined in user.schema.ts.
+   */
+  @ApiPropertyOptional({ type: Object, description: 'Extended profile (Section 2)' })
+  @IsOptional()
+  @IsObject()
+  extendedProfile?: Record<string, any>;
 }

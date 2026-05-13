@@ -6,12 +6,15 @@ import {
   AnnouncementSchema,
 } from './schemas/announcement.schema';
 
+import { AnnouncementsController } from './announcements.controller';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Announcement.name, schema: AnnouncementSchema },
     ]),
   ],
+  controllers: [AnnouncementsController],
   providers: [AnnouncementsService],
   exports: [AnnouncementsService],
 })

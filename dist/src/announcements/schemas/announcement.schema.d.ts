@@ -6,7 +6,7 @@ export declare class Announcement {
     imageUrl: string;
     ctaUrl: string;
     ctaLabel: string;
-    targetCommunities: Types.ObjectId[];
+    targetCommunityIds: Types.ObjectId[];
     isActive: boolean;
     expiresAt: Date;
     createdBy: Types.ObjectId;
@@ -65,7 +65,7 @@ export declare const AnnouncementSchema: import("mongoose").Schema<Announcement,
     }, "id"> & {
         id: string;
     }> | undefined;
-    targetCommunities?: import("mongoose").SchemaDefinitionProperty<Types.ObjectId[], Announcement, Document<unknown, {}, Announcement, {
+    targetCommunityIds?: import("mongoose").SchemaDefinitionProperty<Types.ObjectId[], Announcement, Document<unknown, {}, Announcement, {
         id: string;
     }, import("mongoose").DefaultSchemaOptions> & Omit<Announcement & {
         _id: Types.ObjectId;

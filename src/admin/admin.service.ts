@@ -291,7 +291,11 @@ export class AdminService {
   }
 
   async importCmsApplication(id: string) {
-    return this.cmsBridgeService.importApplication(id);
+    return this.cmsBridgeService.importApplication(id, 'admission');
+  }
+
+  async importCmsMembership(id: string) {
+    return this.cmsBridgeService.importApplication(id, 'membership');
   }
 
   // ─── Dashboard Stats ──────────────────────────────────────────────────────

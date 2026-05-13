@@ -52,7 +52,11 @@ let UsersService = class UsersService {
         const user = await this.userModel.findById(userId);
         if (!user)
             throw new common_1.NotFoundException('User not found');
-        Object.assign(user, dto);
+        Object.entries(dto).forEach(([key, value]) => {
+            if (value !== undefined) {
+                user[key] = value;
+            }
+        });
         user.profileCompletion = (0, profile_completion_helper_1.calculateProfileCompletion)(user.toObject());
         await user.save();
         return this.findById(userId);

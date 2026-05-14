@@ -24,6 +24,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UserRole, UserStatus } from '../users/schemas/user.schema';
 import {
   BulkEmailDto,
+  BulkSmsDto,
   CreateMemberDto,
   ListUsersQueryDto,
   AssignCommunityDto,
@@ -198,6 +199,38 @@ export class AdminController {
   })
   sendBulkEmail(@Body() dto: BulkEmailDto) {
     return this.adminService.sendBulkEmail(dto);
+  }
+
+  @Post('communications/bulk-sms')
+  @ApiOperation({
+    summary:
+      'Send bulk SMS to a community via Uniflow (use communityId="all" for everyone)',
+  })
+  sendBulkSms(@Body() dto: BulkSmsDto) {
+    return this.adminService.sendBulkSms(dto);
+  }
+
+  @Get('communications/templates')
+  @ApiOperation({ summary: 'Get communication templates from Uniflow' })
+  getCommunicationTemplates() {
+    return this.adminService.getCommunicationTemplates();
+  }
+
+  @Get('communications/logs')
+  @ApiOperation({ summary: 'Get communication logs from Uniflow' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  getCommunicationLogs(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.adminService.getCommunicationLogs({ page, limit });
+  }
+
+  @Get('communications/organization')
+  @ApiOperation({ summary: 'Get Uniflow organization details' })
+  getUniflowOrganization() {
+    return this.adminService.getUniflowOrganization();
   }
 
   // ─── CMS / CMC Application Sync ──────────────────────────────────────────

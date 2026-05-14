@@ -21,10 +21,16 @@ export class CreateMemberDto {
 }
 
 export class BulkEmailDto {
-  @ApiProperty({ description: 'Community ID to target (or "all" for everyone)' })
+  @ApiPropertyOptional({ description: 'Community ID to target (or "all" for everyone)' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  communityId: string;
+  communityId?: string;
+
+  @ApiPropertyOptional({ description: 'List of manual email addresses' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  manualRecipients?: string[];
 
   @ApiProperty()
   @IsString()
@@ -35,6 +41,34 @@ export class BulkEmailDto {
   @IsString()
   @IsNotEmpty()
   message: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  scheduleAt?: string;
+}
+
+export class BulkSmsDto {
+  @ApiPropertyOptional({ description: 'Community ID to target (or "all" for everyone)' })
+  @IsOptional()
+  @IsString()
+  communityId?: string;
+
+  @ApiPropertyOptional({ description: 'List of manual phone numbers' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  manualRecipients?: string[];
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  message: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  scheduleAt?: string;
 }
 
 export class AssignCommunityDto {

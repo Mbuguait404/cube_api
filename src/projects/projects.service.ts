@@ -39,21 +39,44 @@ export class ProjectsService {
     priority?: string;
     programId?: string;
     memberId?: string;
-  } = {}): Promise<ProjectDocument[]> {
+  } = {}): Promise<any[]> {
     const query: any = {};
     if (filters.status) query.status = filters.status;
     if (filters.priority) query.priority = filters.priority;
     if (filters.programId) query.program = new Types.ObjectId(filters.programId);
     if (filters.memberId) query.members = new Types.ObjectId(filters.memberId);
 
-    return this.projectModel
+    const projects = await this.projectModel
       .find(query)
       .populate('program', 'name status')
       .populate('teamLead', 'firstName lastName email profilePhoto')
       .populate('members', 'firstName lastName email profilePhoto designation')
       .populate('createdBy', 'firstName lastName')
       .sort({ createdAt: -1 })
+      .lean()
       .exec();
+
+    // Get task stats for each project
+    const projectIds = projects.map(p => p._id);
+    const taskStats = await this.projectModel.db.model('Task').aggregate([
+      { $match: { project: { $in: projectIds } } },
+      {
+        $group: {
+          _id: '$project',
+          total: { $sum: 1 },
+          completed: {
+            $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+
+    const statsMap = new Map(taskStats.map(s => [s._id.toString(), s]));
+
+    return projects.map(p => ({
+      ...p,
+      taskStats: statsMap.get(p._id.toString()) || { total: 0, completed: 0 }
+    }));
   }
 
   async findById(id: string): Promise<ProjectDocument> {
@@ -77,14 +100,36 @@ export class ProjectsService {
     return project;
   }
 
-  async findByMember(userId: string): Promise<ProjectDocument[]> {
-    return this.projectModel
+  async findByMember(userId: string): Promise<any[]> {
+    const projects = await this.projectModel
       .find({ members: new Types.ObjectId(userId) })
       .populate('program', 'name')
       .populate('teamLead', 'firstName lastName profilePhoto')
       .select('title description status priority deadline coverColor tags')
       .sort({ deadline: 1 })
+      .lean()
       .exec();
+
+    const projectIds = projects.map(p => p._id);
+    const taskStats = await this.projectModel.db.model('Task').aggregate([
+      { $match: { project: { $in: projectIds } } },
+      {
+        $group: {
+          _id: '$project',
+          total: { $sum: 1 },
+          completed: {
+            $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+
+    const statsMap = new Map(taskStats.map(s => [s._id.toString(), s]));
+
+    return projects.map(p => ({
+      ...p,
+      taskStats: statsMap.get(p._id.toString()) || { total: 0, completed: 0 }
+    }));
   }
 
   async update(id: string, dto: UpdateProjectDto): Promise<ProjectDocument> {

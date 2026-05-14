@@ -71,6 +71,38 @@ export class UniflowService {
     return this.send({ type: 'sms', to: phone, message });
   }
 
+  // ─── Templates & Logs ─────────────────────────────────────────────────────
+
+  async getTemplates() {
+    try {
+      const { data } = await this.client.get('/templates');
+      return data;
+    } catch (err) {
+      this.logger.error(`Failed to fetch templates: ${err.message}`);
+      return []; // Return empty array on failure instead of throwing, to not break UI
+    }
+  }
+
+  async getLogs(params: any = {}) {
+    try {
+      const { data } = await this.client.get('/message-logs', { params });
+      return data;
+    } catch (err) {
+      this.logger.error(`Failed to fetch message logs: ${err.message}`);
+      return [];
+    }
+  }
+
+  async getOrganization() {
+    try {
+      const { data } = await this.client.get('/organizations/current');
+      return data;
+    } catch (err) {
+      this.logger.error(`Failed to fetch org details: ${err.message}`);
+      return null;
+    }
+  }
+
   // ─── Core sender ─────────────────────────────────────────────────────────
 
   private async send(payload: {

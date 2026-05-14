@@ -34,6 +34,7 @@ async function bootstrap(): Promise<void> {
       'http://localhost:3000',
       'http://localhost:5173',
       'http://localhost:8080',
+      'https://cube-hub-website.vercel.app',
     ],
     credentials: true,
   });

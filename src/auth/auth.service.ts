@@ -102,6 +102,8 @@ export class AuthService {
       user.email,
       `${user.firstName} ${user.lastName}`,
       tempPassword,
+      'Community Member',
+      user.cmsApplicationId ? user.cmsApplicationId.slice(-4).toUpperCase() : user._id.toString().slice(-4).toUpperCase(),
     );
 
     return {

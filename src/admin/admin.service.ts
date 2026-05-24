@@ -7,6 +7,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   User,
   UserDocument,
@@ -41,6 +42,7 @@ export class AdminService {
     private uniflowService: UniflowService,
     private cmsBridgeService: CmsBridgeService,
     private authService: AuthService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   // ─── User Management ──────────────────────────────────────────────────────
@@ -194,9 +196,19 @@ export class AdminService {
     return this.badgesService.findAll();
   }
 
-  async assignBadgeToUser(userId: string, badgeId: string) {
-    await this.badgesService.findById(badgeId); // validates badge exists
-    return this.usersService.assignBadge(userId, badgeId);
+  async assignBadgeToUser(userId: string, badgeId: string, adminId: string = 'system') {
+    const badge = await this.badgesService.findById(badgeId); // validates badge exists
+    const user = await this.usersService.assignBadge(userId, badgeId);
+
+    this.eventEmitter.emit('badge.awarded', {
+      userId,
+      badgeName: badge.name,
+      badgeDescription: badge.description || '',
+      adminId,
+      reason: badge.description || 'outstanding achievement',
+    });
+
+    return user;
   }
 
   async deleteBadge(badgeId: string) {

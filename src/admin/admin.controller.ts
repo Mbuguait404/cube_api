@@ -135,8 +135,10 @@ export class AdminController {
   assignBadge(
     @Param('id') userId: string,
     @Body('badgeId') badgeId: string,
+    @CurrentUser() admin: any,
   ) {
-    return this.adminService.assignBadgeToUser(userId, badgeId);
+    const adminId = admin._id ? admin._id.toString() : admin.sub;
+    return this.adminService.assignBadgeToUser(userId, badgeId, adminId);
   }
 
   @Delete('badges/:id')

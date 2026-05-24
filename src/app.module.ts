@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { AdminModule } from './admin/admin.module';
@@ -19,6 +20,7 @@ import { CommentsModule } from './comments/comments.module';
 import { LogsModule } from './logs/logs.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ChatModule } from './chat/chat.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -29,6 +31,7 @@ import { ChatModule } from './chat/chat.module';
         uri: config.get<string>('MONGODB_URI'),
       }),
     }),
+    EventEmitterModule.forRoot(),
     AuthModule,
     UsersModule,
     AdminModule,
@@ -45,6 +48,7 @@ import { ChatModule } from './chat/chat.module';
     CommentsModule,
     LogsModule,
     ChatModule,
+    NotificationsModule,
   ],
   providers: [
     {

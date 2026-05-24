@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Task, TaskDocument, TaskStatus } from './schemas/task.schema';
 import { CreateTaskDto, UpdateTaskDto, UpdateTaskStatusDto } from './dto/task.dto';
 
@@ -12,6 +13,7 @@ import { CreateTaskDto, UpdateTaskDto, UpdateTaskStatusDto } from './dto/task.dt
 export class TasksService {
   constructor(
     @InjectModel(Task.name) private taskModel: Model<TaskDocument>,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async create(
@@ -28,7 +30,21 @@ export class TasksService {
       createdBy: new Types.ObjectId(createdBy),
       assignees: ids.map((a) => new Types.ObjectId(a)),
     };
-    return this.taskModel.create(data);
+    const task = await this.taskModel.create(data);
+
+    // Populate project to get name
+    const populated = await task.populate('project', 'title');
+
+    if (ids.length > 0) {
+      this.eventEmitter.emit('task.assigned', {
+        task: populated,
+        assigneeIds: ids,
+        creatorId: createdBy,
+        projectName: (populated.project as any)?.title || 'Project',
+      });
+    }
+
+    return task;
   }
 
   async findByProject(projectId: string): Promise<TaskDocument[]> {
@@ -75,8 +91,41 @@ export class TasksService {
       updates.assignees = ids.map((a) => new Types.ObjectId(a));
     }
 
+    const oldTask = await this.taskModel.findById(id);
+    if (!oldTask) throw new NotFoundException('Task not found');
+
     const task = await this.taskModel.findByIdAndUpdate(id, updates, { new: true });
     if (!task) throw new NotFoundException('Task not found');
+
+    const populated = await task.populate('project', 'title');
+
+    // Check if assignees changed to emit task.assigned
+    if (assigneeIds || assignees) {
+      const oldAssignees = oldTask.assignees.map((a) => a.toString());
+      const newAssignees = task.assignees.map((a) => a.toString());
+      const addedAssignees = newAssignees.filter((a) => !oldAssignees.includes(a));
+
+      if (addedAssignees.length > 0) {
+        this.eventEmitter.emit('task.assigned', {
+          task: populated,
+          assigneeIds: addedAssignees,
+          creatorId: task.createdBy.toString(),
+          projectName: (populated.project as any)?.title || 'Project',
+        });
+      }
+    }
+
+    // Check status change
+    if (dto.status && oldTask.status !== dto.status) {
+      this.eventEmitter.emit('task.status.changed', {
+        task: populated,
+        oldStatus: oldTask.status,
+        newStatus: dto.status,
+        userId: task.createdBy.toString(),
+        projectName: (populated.project as any)?.title || 'Project',
+      });
+    }
+
     return task;
   }
 
@@ -92,11 +141,25 @@ export class TasksService {
     const isAssignee = task.assignees.some((a) => a.toString() === userId);
     if (!isAssignee) throw new ForbiddenException('Task not assigned to you');
 
+    const oldStatus = task.status;
     const updates: any = { status: dto.status };
     if (dto.status === TaskStatus.DONE) updates.completedAt = new Date();
 
     const updatedTask = await this.taskModel.findByIdAndUpdate(id, updates, { new: true });
     if (!updatedTask) throw new NotFoundException('Task not found');
+
+    const populated = await updatedTask.populate('project', 'title');
+
+    if (oldStatus !== dto.status) {
+      this.eventEmitter.emit('task.status.changed', {
+        task: populated,
+        oldStatus,
+        newStatus: dto.status,
+        userId,
+        projectName: (populated.project as any)?.title || 'Project',
+      });
+    }
+
     return updatedTask;
   }
 

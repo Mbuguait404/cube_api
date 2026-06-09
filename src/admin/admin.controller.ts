@@ -284,4 +284,19 @@ export class AdminController {
   importCmsMembership(@Param('id') id: string) {
     return this.adminService.importCmsMembership(id);
   }
+
+  @Get('cms/innovation-challenges')
+  @ApiOperation({ summary: 'Pull innovation challenge applications from CMS' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'status', required: false })
+  getCmsInnovationChallenges(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.adminService.getCmsInnovationChallenges(+page, +limit, search, status);
+  }
 }

@@ -1,17 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { InnovationPhase2, InnovationPhase2Document } from './schemas/innovation-phase2.schema';
 import { InnovationChallengeApplication, InnovationChallengeApplicationDocument } from './schemas/innovation-challenge-application.schema';
 import { CreateInnovationPhase2Dto } from './dto/create-innovation-phase2.dto';
+import { CmsBridgeService } from '../integrations/cms-bridge/cms-bridge.service';
 
 @Injectable()
 export class InnovationService {
+  private readonly logger = new Logger(InnovationService.name);
+
   constructor(
     @InjectModel(InnovationPhase2.name)
     private readonly phase2Model: Model<InnovationPhase2Document>,
     @InjectModel(InnovationChallengeApplication.name)
     private readonly challengeApplicationModel: Model<InnovationChallengeApplicationDocument>,
+    private readonly cmsBridge: CmsBridgeService,
   ) {}
 
   async create(dto: CreateInnovationPhase2Dto): Promise<InnovationPhase2> {
@@ -77,40 +81,23 @@ export class InnovationService {
   }
 
   async findAllChallengeApplications(page = 1, limit = 10, search?: string, status?: string) {
-    const filter: any = {};
-    
-    if (search) {
-      filter.$or = [
-        { organization: { $regex: search, $options: 'i' } },
-        { projectTitle: { $regex: search, $options: 'i' } },
-        { fullName: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-      ];
-    }
-
-    if (status && status !== 'all') {
-      filter.status = status;
-    }
-
-    const [data, total] = await Promise.all([
-      this.challengeApplicationModel
-        .find(filter)
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .sort({ createdAt: -1 })
-        .exec(),
-      this.challengeApplicationModel.countDocuments(filter).exec(),
-    ]);
-
-    return {
-      data,
-      meta: {
-        total,
+    try {
+      this.logger.log(`[Innovation Service] Requesting challenge applications (page: ${page}, limit: ${limit}, search: ${search}, status: ${status})`);
+      
+      const result = await this.cmsBridge.getInnovationChallenges({
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+        search,
+        status,
+      });
+
+      this.logger.log(`[Innovation Service] Retrieved ${result.data.length} applications. Total: ${result.meta.total}`);
+
+      return result;
+    } catch (error: any) {
+      this.logger.error(`[Innovation Service] Failed to fetch challenge applications: ${error?.message || error}`);
+      throw error;
+    }
   }
 
   async findOneChallengeApplication(id: string): Promise<InnovationChallengeApplication> {

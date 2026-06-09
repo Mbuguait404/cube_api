@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Delete,
+  Patch,
   Body,
   Param,
   Query,
@@ -59,5 +60,50 @@ export class InnovationController {
   @ApiOperation({ summary: 'Delete a Phase 2 submission by ID (Admin only)' })
   remove(@Param('id') id: string) {
     return this.service.remove(id);
+  }
+}
+
+@ApiTags('Innovation Challenge Applications')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+@Controller('innovation-challenges')
+export class InnovationChallengeController {
+  constructor(private readonly service: InnovationService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List innovation challenge applications (Admin only)' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'status', required: false })
+  findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.service.findAllChallengeApplications(+page, +limit, search, status);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a challenge application by ID (Admin only)' })
+  findOne(@Param('id') id: string) {
+    return this.service.findOneChallengeApplication(id);
+  }
+
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Update challenge application status (Admin only)' })
+  updateStatus(
+    @Param('id') id: string,
+    @Body('status') status: string,
+  ) {
+    return this.service.updateChallengeApplicationStatus(id, status);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a challenge application by ID (Admin only)' })
+  remove(@Param('id') id: string) {
+    return this.service.removeChallengeApplication(id);
   }
 }

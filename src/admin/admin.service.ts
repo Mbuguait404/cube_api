@@ -382,6 +382,10 @@ export class AdminService {
     return this.cmsBridgeService.importApplication(id, 'membership');
   }
 
+  async getCmsInnovationChallenges(page = 1, limit = 10, search?: string, status?: string) {
+    return this.cmsBridgeService.getInnovationChallenges({ page, limit, search, status });
+  }
+
   // ─── Dashboard Stats ──────────────────────────────────────────────────────
 
   async getDashboardStats() {

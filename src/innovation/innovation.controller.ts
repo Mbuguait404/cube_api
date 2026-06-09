@@ -31,6 +31,36 @@ export class InnovationController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Get('progress')
+  @ApiOperation({ summary: 'Get Phase 2 progress and match summary (Admin only)' })
+  progress() {
+    return this.service.getPhase2Progress();
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Patch('reconcile')
+  @ApiOperation({ summary: 'Reconcile Phase 2 submissions against Phase 1 applications (Admin only)' })
+  reconcile() {
+    return this.service.reconcilePhase2Matches();
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Patch(':id/link')
+  @ApiOperation({ summary: 'Manually link a Phase 2 submission to a Phase 1 application (Admin only)' })
+  linkPhase2ToApplication(
+    @Param('id') id: string,
+    @Body('applicationId') applicationId: string,
+  ) {
+    return this.service.linkPhase2ToApplication(id, applicationId);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @Get()
   @ApiOperation({ summary: 'List Phase 2 submissions (Admin only)' })
   @ApiQuery({ name: 'page', required: false })

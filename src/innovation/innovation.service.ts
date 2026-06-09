@@ -18,8 +18,56 @@ export class InnovationService {
     private readonly cmsBridge: CmsBridgeService,
   ) {}
 
+  private normalize(value?: string): string {
+    return (value || '').trim().toLowerCase();
+  }
+
+  private async findMatchingChallengeApplication(dto: CreateInnovationPhase2Dto) {
+    const normalizedEmail = this.normalize(dto.email);
+    const normalizedOrgName = this.normalize(dto.orgName);
+
+    const result = await this.cmsBridge.getInnovationChallenges({ page: 1, limit: 50, search: dto.email });
+    const candidate = result.data.find((application: any) => {
+      const appEmail = this.normalize(application.email);
+      const appOrganization = this.normalize(application.organization);
+      return (
+        (appEmail && appEmail === normalizedEmail && appOrganization === normalizedOrgName) ||
+        (appEmail && appEmail === normalizedEmail)
+      );
+    });
+
+    return candidate;
+  }
+
   async create(dto: CreateInnovationPhase2Dto): Promise<InnovationPhase2> {
-    const created = new this.phase2Model(dto);
+    let applicationId: string | undefined;
+    let applicationEmail: string | undefined;
+    let applicationOrganization: string | undefined;
+    let matchStatus = 'unmatched';
+    let matchedAt: Date | undefined;
+
+    try {
+      const match = await this.findMatchingChallengeApplication(dto);
+      if (match) {
+        applicationId = match._id;
+        applicationEmail = match.email;
+        applicationOrganization = match.organization;
+        matchStatus = 'matched';
+        matchedAt = new Date();
+      }
+    } catch (error: any) {
+      this.logger.warn(`[Innovation Service] Phase 2 match attempt failed: ${error?.message || error}`);
+    }
+
+    const created = new this.phase2Model({
+      ...dto,
+      applicationId,
+      applicationEmail,
+      applicationOrganization,
+      matchStatus,
+      matchedAt,
+    });
+
     return created.save();
   }
 
@@ -68,6 +116,105 @@ export class InnovationService {
       throw new NotFoundException(`Phase 2 submission not found`);
     }
     return { success: true };
+  }
+
+  async getPhase2Progress() {
+    const [totalPhase2, matchedCount] = await Promise.all([
+      this.phase2Model.countDocuments().exec(),
+      this.phase2Model.countDocuments({ matchStatus: 'matched' }).exec(),
+    ]);
+
+    const applicationsResult = await this.cmsBridge.getInnovationChallenges({ page: 1, limit: 1 });
+    const totalPhase1 = applicationsResult.meta.total;
+
+    return {
+      totalPhase1,
+      totalPhase2,
+      matched: matchedCount,
+      unmatched: totalPhase2 - matchedCount,
+      pendingPhase2: Math.max(0, totalPhase1 - matchedCount),
+    };
+  }
+
+  async reconcilePhase2Matches() {
+    const submissions = await this.phase2Model.find().exec();
+    let updated = 0;
+
+    for (const submission of submissions) {
+      const match = await this.findMatchingChallengeApplication({
+        orgName: submission.orgName,
+        uploadedBy: submission.uploadedBy,
+        email: submission.email,
+        phone: submission.phone,
+        youtubeLink: submission.youtubeLink,
+        driveLink: submission.driveLink,
+      } as CreateInnovationPhase2Dto);
+
+      const newStatus = match ? 'matched' : 'unmatched';
+      const newAppId = match?._id;
+      const newAppEmail = match?.email;
+      const newAppOrg = match?.organization;
+      const newMatchedAt = match ? new Date() : undefined;
+
+      const changed =
+        submission.matchStatus !== newStatus ||
+        submission.applicationId !== newAppId ||
+        submission.applicationEmail !== newAppEmail ||
+        submission.applicationOrganization !== newAppOrg;
+
+      if (changed) {
+        submission.matchStatus = newStatus;
+        submission.applicationId = newAppId;
+        submission.applicationEmail = newAppEmail;
+        submission.applicationOrganization = newAppOrg;
+        submission.matchedAt = newMatchedAt;
+        await submission.save();
+        updated += 1;
+      }
+    }
+
+    return {
+      total: submissions.length,
+      updated,
+      matched: await this.phase2Model.countDocuments({ matchStatus: 'matched' }).exec(),
+      unmatched: await this.phase2Model.countDocuments({ matchStatus: 'unmatched' }).exec(),
+    };
+  }
+
+  async linkPhase2ToApplication(phase2Id: string, applicationId: string) {
+    const submission = await this.phase2Model.findById(phase2Id).exec();
+    if (!submission) {
+      throw new NotFoundException(`Phase 2 submission not found`);
+    }
+
+    let matchedApp: any | null = null;
+    try {
+      // Try to find the application in the CMS by id or email
+      const searchResult = await this.cmsBridge.getInnovationChallenges({ page: 1, limit: 50, search: applicationId });
+      matchedApp = searchResult.data.find((a: any) => {
+        const idMatch = (a._id || a.id) === applicationId;
+        const emailMatch = a.email && a.email.toLowerCase() === String(applicationId).toLowerCase();
+        return idMatch || emailMatch;
+      });
+    } catch (err: any) {
+      this.logger.warn(`[Innovation Service] Manual link lookup failed: ${err?.message || err}`);
+    }
+
+    if (matchedApp) {
+      submission.applicationId = matchedApp._id || matchedApp.id;
+      submission.applicationEmail = matchedApp.email;
+      submission.applicationOrganization = matchedApp.organization;
+      submission.matchStatus = 'matched';
+      submission.matchedAt = new Date();
+    } else {
+      // Accept manual link even if CMS verification failed
+      submission.applicationId = applicationId;
+      submission.matchStatus = 'matched';
+      submission.matchedAt = new Date();
+    }
+
+    await submission.save();
+    return submission;
   }
 
   // ─── Innovation Challenge Applications ─────────────────────────────────────

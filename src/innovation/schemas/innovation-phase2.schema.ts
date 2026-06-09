@@ -22,6 +22,21 @@ export class InnovationPhase2 {
 
   @Prop({ required: true, trim: true })
   driveLink: string;
+
+  @Prop({ trim: true, lowercase: true })
+  applicationEmail?: string;
+
+  @Prop({ trim: true })
+  applicationOrganization?: string;
+
+  @Prop({ trim: true })
+  applicationId?: string;
+
+  @Prop({ enum: ['matched', 'unmatched'], default: 'unmatched' })
+  matchStatus?: string;
+
+  @Prop()
+  matchedAt?: Date;
 }
 
 export const InnovationPhase2Schema = SchemaFactory.createForClass(InnovationPhase2);

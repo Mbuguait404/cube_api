@@ -361,4 +361,18 @@ export class CmsBridgeService {
       throw err;
     }
   }
+
+  async getInnovationChallengeById(id: string) {
+    try {
+      this.logger.log(`[CMS Bridge] Fetching innovation challenge by ID from CMS: ${id}`);
+      const headers = await this.authHeaders();
+      const { data } = await this.client.get(`/innovation-challenges/${id}`, {
+        headers,
+      });
+      return data.data || data || null;
+    } catch (err: any) {
+      this.logger.error(`[CMS Bridge] getInnovationChallengeById failed: ${err?.message || err}`);
+      throw err;
+    }
+  }
 }

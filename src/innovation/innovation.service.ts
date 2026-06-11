@@ -272,4 +272,65 @@ export class InnovationService {
     }
     return updated;
   }
+
+  /**
+   * Return a merged view containing the Phase 1 application (from CMS) and the linked Phase 2 submission (if any).
+   */
+  async getMergedChallengeApplication(id: string) {
+    // Try to locate application in CMS by exact ID first.
+    let application: any = null;
+    try {
+      application = await this.cmsBridge.getInnovationChallengeById(id);
+    } catch (err: any) {
+      this.logger.warn(`[Innovation Service] getInnovationChallengeById failed for merged view: ${err?.message || err}`);
+    }
+
+    if (!application) {
+      try {
+        const res = await this.cmsBridge.getInnovationChallenges({ page: 1, limit: 50, search: id });
+        application = res.data.find((a: any) => (a._id || a.id) === id || String(a._id || a.id) === String(id));
+        if (!application) {
+          // Also try matching by email if id looks like an email
+          application = res.data.find((a: any) => a.email && String(a.email).toLowerCase() === String(id).toLowerCase());
+        }
+      } catch (err: any) {
+        this.logger.warn(`[Innovation Service] Failed to fetch application from CMS for merged view: ${err?.message || err}`);
+      }
+    }
+
+    // If we didn't find it in CMS, try local collection as a fallback
+    if (!application) {
+      try {
+        const local = await this.challengeApplicationModel.findById(id).lean().exec();
+        if (local) application = local;
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    if (!application) {
+      throw new NotFoundException('Challenge application not found');
+    }
+
+    // Find matching Phase 2 submission by applicationId first, then by email/organization fallbacks
+    let submission = await this.phase2Model.findOne({ applicationId: application._id || application.id }).exec();
+
+    if (!submission) {
+      const appEmail = application.email && String(application.email).toLowerCase();
+      const appOrg = application.organization && String(application.organization).toLowerCase();
+      submission = await this.phase2Model.findOne({
+        $or: [
+          { applicationEmail: appEmail },
+          { applicationOrganization: application.organization },
+          { email: appEmail },
+          { orgName: application.organization },
+        ],
+      }).exec();
+    }
+
+    return {
+      application,
+      submission: submission || null,
+    };
+  }
 }

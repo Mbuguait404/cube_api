@@ -122,6 +122,12 @@ export class InnovationChallengeController {
     return this.service.findOneChallengeApplication(id);
   }
 
+  @Get(':id/merged')
+  @ApiOperation({ summary: 'Get merged challenge application + linked Phase 2 submission (Admin only)' })
+  getMerged(@Param('id') id: string) {
+    return this.service.getMergedChallengeApplication(id);
+  }
+
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update challenge application status (Admin only)' })
   updateStatus(

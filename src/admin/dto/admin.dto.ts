@@ -20,6 +20,15 @@ export class CreateMemberDto {
   role?: UserRole;
 }
 
+export class UpdateUserDto {
+  @ApiPropertyOptional() @IsOptional() @IsString() firstName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() lastName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsEmail() email?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() phone?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() designation?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() institution?: string;
+}
+
 export class BulkEmailDto {
   @ApiPropertyOptional({ description: 'Community ID to target (or "all" for everyone)' })
   @IsOptional()

@@ -26,6 +26,7 @@ import {
   BulkSmsDto,
   CreateMemberDto,
   ListUsersQueryDto,
+  UpdateUserDto,
 } from './dto/admin.dto';
 import { CreateBadgeDto } from '../badges/dto/create-badge.dto';
 import { CreateCommunityDto } from '../communities/dto/create-community.dto';
@@ -91,6 +92,16 @@ export class AdminService {
 
   async getUserById(id: string) {
     const user = await this.usersService.findById(id);
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
+  async updateUser(id: string, dto: UpdateUserDto) {
+    const user = await this.userModel.findByIdAndUpdate(
+      id,
+      { $set: dto },
+      { new: true },
+    );
     if (!user) throw new NotFoundException('User not found');
     return user;
   }

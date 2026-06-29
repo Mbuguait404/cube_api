@@ -1,0 +1,87 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { UserRole } from '../users/schemas/user.schema';
+import { JudgeService, JUDGE_CRITERIA } from './judge.service';
+import { CreateJudgeScoreDto } from './dto/create-judge-score.dto';
+
+@ApiTags('Judge Portal')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.JUDGE, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+@Controller('judge')
+export class JudgeController {
+  constructor(private readonly judgeService: JudgeService) {}
+
+  // ─── Portal Meta ──────────────────────────────────────────────────────────
+
+  @Get('criteria')
+  @ApiOperation({ summary: 'Get scoring criteria definition' })
+  getCriteria() {
+    return { criteria: JUDGE_CRITERIA };
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Get portal stats for the current judge' })
+  getStats(@CurrentUser() user: any) {
+    return this.judgeService.getStats(user.sub);
+  }
+
+  // ─── Applicants ───────────────────────────────────────────────────────────
+
+  @Get('applicants')
+  @ApiOperation({ summary: 'List all eligible (matched) applicants' })
+  getApplicants() {
+    return this.judgeService.getEligibleApplicants();
+  }
+
+  @Get('applicants/:id')
+  @ApiOperation({ summary: 'Get a single merged applicant record' })
+  getApplicant(@Param('id') id: string) {
+    return this.judgeService.getApplicantDetail(id);
+  }
+
+  // ─── Scores ───────────────────────────────────────────────────────────────
+
+  @Post('scores')
+  @ApiOperation({ summary: 'Submit or update own score for an applicant' })
+  submitScore(@Body() dto: CreateJudgeScoreDto, @CurrentUser() user: any) {
+    const judgeName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email;
+    return this.judgeService.submitScore(dto, user.sub, judgeName);
+  }
+
+  @Get('scores/me')
+  @ApiOperation({ summary: "Get current judge's submitted scores" })
+  getMyScores(@CurrentUser() user: any) {
+    return this.judgeService.getMyScores(user.sub);
+  }
+
+  @Get('scores/:applicantId')
+  @ApiOperation({
+    summary: 'Get scores for an applicant (peer scores hidden until own submission)',
+  })
+  getScoresForApplicant(
+    @Param('applicantId') applicantId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.judgeService.getScoresForApplicant(applicantId, user.sub);
+  }
+
+  // ─── Leaderboard ──────────────────────────────────────────────────────────
+
+  @Get('leaderboard')
+  @ApiOperation({ summary: 'Get ranked leaderboard across all tracks' })
+  getLeaderboard() {
+    return this.judgeService.getLeaderboard();
+  }
+}

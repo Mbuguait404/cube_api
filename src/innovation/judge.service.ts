@@ -225,7 +225,10 @@ export class JudgeService {
         organization: a.organization,
         projectStage: a.projectStage,
         averageScore: avg,
-        totalScores: scores.map((s) => s.totalScore),
+        detailedScores: scores.map((s) => ({
+          judgeName: s.judgeName || 'Judge',
+          totalScore: s.totalScore,
+        })),
         judgeCount: scores.length,
         matchedAt: a.matchedAt,
         shortlisted: false,

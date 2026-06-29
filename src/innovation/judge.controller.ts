@@ -34,7 +34,8 @@ export class JudgeController {
   @Get('stats')
   @ApiOperation({ summary: 'Get portal stats for the current judge' })
   getStats(@CurrentUser() user: any) {
-    return this.judgeService.getStats(user.sub);
+    const judgeId = user._id ? user._id.toString() : user.sub;
+    return this.judgeService.getStats(judgeId);
   }
 
   // ─── Applicants ───────────────────────────────────────────────────────────
@@ -56,14 +57,16 @@ export class JudgeController {
   @Post('scores')
   @ApiOperation({ summary: 'Submit or update own score for an applicant' })
   submitScore(@Body() dto: CreateJudgeScoreDto, @CurrentUser() user: any) {
+    const judgeId = user._id ? user._id.toString() : user.sub;
     const judgeName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email;
-    return this.judgeService.submitScore(dto, user.sub, judgeName);
+    return this.judgeService.submitScore(dto, judgeId, judgeName);
   }
 
   @Get('scores/me')
   @ApiOperation({ summary: "Get current judge's submitted scores" })
   getMyScores(@CurrentUser() user: any) {
-    return this.judgeService.getMyScores(user.sub);
+    const judgeId = user._id ? user._id.toString() : user.sub;
+    return this.judgeService.getMyScores(judgeId);
   }
 
   @Get('scores/:applicantId')
@@ -74,7 +77,8 @@ export class JudgeController {
     @Param('applicantId') applicantId: string,
     @CurrentUser() user: any,
   ) {
-    return this.judgeService.getScoresForApplicant(applicantId, user.sub);
+    const judgeId = user._id ? user._id.toString() : user.sub;
+    return this.judgeService.getScoresForApplicant(applicantId, judgeId);
   }
 
   // ─── Leaderboard ──────────────────────────────────────────────────────────

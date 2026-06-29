@@ -28,6 +28,7 @@ import {
   CreateMemberDto,
   ListUsersQueryDto,
   AssignCommunityDto,
+  UpdateUserDto,
 } from './dto/admin.dto';
 import { CreateBadgeDto } from '../badges/dto/create-badge.dto';
 import { CreateCommunityDto } from '../communities/dto/create-community.dto';
@@ -67,6 +68,15 @@ export class AdminController {
   @ApiOperation({ summary: 'Manually create a member account' })
   createMember(@Body() dto: CreateMemberDto) {
     return this.adminService.createMember(dto);
+  }
+
+  @Patch('users/:id')
+  @ApiOperation({ summary: 'Update basic user details' })
+  updateUser(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+  ) {
+    return this.adminService.updateUser(id, dto);
   }
 
   @Patch('users/:id/status')

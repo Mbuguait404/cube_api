@@ -22,6 +22,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ChatModule } from './chat/chat.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { InnovationModule } from './innovation/innovation.module';
+import { FeedbackSubmissionsModule } from './feedback-submissions/feedback-submissions.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { InnovationModule } from './innovation/innovation.module';
     ChatModule,
     NotificationsModule,
     InnovationModule,
+    FeedbackSubmissionsModule,
   ],
   providers: [
     {

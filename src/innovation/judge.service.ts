@@ -34,14 +34,20 @@ export class JudgeService {
   /** Exhaustively fetch all Phase 1 applications from the CMS bridge */
   private async fetchAllPhase1Applications(): Promise<any[]> {
     const pageSize = 100;
+    const maxPages = 20;
     let page = 1;
     const all: any[] = [];
 
-    while (true) {
-      const result = await this.cmsBridge.getInnovationChallenges({ page, limit: pageSize });
-      all.push(...result.data);
-      if (all.length >= result.meta.total || result.data.length === 0) break;
-      page += 1;
+    while (page <= maxPages) {
+      try {
+        const result = await this.cmsBridge.getInnovationChallenges({ page, limit: pageSize });
+        all.push(...result.data);
+        if (all.length >= result.meta.total || result.data.length === 0) break;
+        page += 1;
+      } catch (err) {
+        this.logger.warn(`Failed to fetch page ${page} of Phase 1 applications: ${(err as Error).message}`);
+        break;
+      }
     }
     return all;
   }
@@ -266,20 +272,22 @@ export class JudgeService {
 
   /** Summary stats for the portal home page */
   async getStats(judgeId: string) {
-    const [{ data: applicants }, myScores, allScores] = await Promise.all([
-      this.getEligibleApplicants(),
+    let applicants: any[] = [];
+
+    try {
+      const result = await this.getEligibleApplicants();
+      applicants = (result as any).data || [];
+    } catch (err) {
+      this.logger.warn(`Failed to fetch eligible applicants, continuing with empty list: ${(err as Error).message}`);
+    }
+
+    const [myScores, allScores] = await Promise.all([
       this.scoreModel.find({ judgeId: new Types.ObjectId(judgeId) }).lean().exec(),
       this.scoreModel.find().lean().exec(),
     ]);
 
-    const applicantIds = new Set((applicants as any[]).map((a: any) => a.id));
-    const tracks = new Set((applicants as any[]).map((a: any) => a.challengeTrack));
-
-    // Count applicants where all judges who scored anyone have also scored this applicant
-    const scoreCountByApplicant = new Map<string, number>();
-    for (const s of allScores) {
-      scoreCountByApplicant.set(s.applicantId, (scoreCountByApplicant.get(s.applicantId) ?? 0) + 1);
-    }
+    const applicantIds = new Set(applicants.map((a: any) => a.id));
+    const tracks = new Set(applicants.map((a: any) => a.challengeTrack));
 
     return {
       totalEligible: applicantIds.size,

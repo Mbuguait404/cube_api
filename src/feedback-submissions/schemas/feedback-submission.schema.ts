@@ -55,6 +55,9 @@ export class FeedbackSubmission {
   // Optional quick check
   @Prop()
   usefulness: string;
+
+  @Prop()
+  additionalNotes: string;
 }
 
 export const FeedbackSubmissionSchema =

@@ -71,6 +71,11 @@ export class CreateFeedbackSubmissionDto {
   @IsString()
   personalReflection?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  additionalNotes?: string;
+
   @ApiPropertyOptional({ enum: ['Very Useful', 'Useful', 'Moderately useful', 'Not useful'] })
   @IsOptional()
   @IsString()

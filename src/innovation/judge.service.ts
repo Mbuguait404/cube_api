@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { JudgeScore, JudgeScoreDocument } from './schemas/judge-score.schema';
 import { InnovationPhase2, InnovationPhase2Document } from './schemas/innovation-phase2.schema';
+import { InnovationChallengeApplication, InnovationChallengeApplicationDocument } from './schemas/innovation-challenge-application.schema';
 import { CmsBridgeService } from '../integrations/cms-bridge/cms-bridge.service';
 import { CreateJudgeScoreDto } from './dto/create-judge-score.dto';
 
@@ -26,6 +27,8 @@ export class JudgeService {
     private readonly scoreModel: Model<JudgeScoreDocument>,
     @InjectModel(InnovationPhase2.name)
     private readonly phase2Model: Model<InnovationPhase2Document>,
+    @InjectModel(InnovationChallengeApplication.name)
+    private readonly challengeAppModel: Model<InnovationChallengeApplicationDocument>,
     private readonly cmsBridge: CmsBridgeService,
   ) {}
 
@@ -86,17 +89,54 @@ export class JudgeService {
       throw new NotFoundException('Eligible applicant not found');
     }
 
-    let p1: any = null;
-    try {
-      p1 = await this.cmsBridge.getInnovationChallengeById(p2.applicationId as string);
-    } catch {
-      // Fallback — search by email
-      const res = await this.cmsBridge.getInnovationChallenges({ page: 1, limit: 50, search: p2.email });
-      p1 = res.data.find((a: any) => String(a._id || a.id) === String(p2.applicationId)) ?? null;
-    }
-
+    const p1 = await this.lookupPhase1Application(p2);
     if (!p1) throw new NotFoundException('Phase 1 application not found for this submission');
     return this.mergeApplicant(p2, p1);
+  }
+
+  /**
+   * Attempt to resolve the Phase 1 application from multiple sources:
+   * 1. CMS by applicationId (direct lookup)
+   * 2. CMS by email search (fallback)
+   * 3. Local MongoDB collection (last resort)
+   */
+  private async lookupPhase1Application(p2: any): Promise<any | null> {
+    const appId = p2.applicationId as string | undefined;
+
+    // 1. Try direct CMS lookup by applicationId
+    if (appId) {
+      try {
+        const result = await this.cmsBridge.getInnovationChallengeById(appId);
+        if (result) return result;
+      } catch {
+        this.logger.warn(`Direct CMS lookup failed for applicationId: ${appId}`);
+      }
+    }
+
+    // 2. Fallback — search CMS by email and match by applicationId
+    if (p2.email) {
+      try {
+        const res = await this.cmsBridge.getInnovationChallenges({ page: 1, limit: 50, search: p2.email });
+        const found = res.data.find((a: any) =>
+          appId ? String(a._id || a.id) === String(appId) : a.email?.toLowerCase() === p2.email.toLowerCase(),
+        );
+        if (found) return found;
+      } catch (err) {
+        this.logger.warn(`CMS email-search fallback failed for ${p2.email}: ${(err as Error).message}`);
+      }
+    }
+
+    // 3. Last resort — check local MongoDB collection
+    if (appId) {
+      try {
+        const local = await this.challengeAppModel.findById(appId).lean().exec();
+        if (local) return local;
+      } catch {
+        // ignore invalid ObjectId format
+      }
+    }
+
+    return null;
   }
 
   private mergeApplicant(p2: any, p1: any) {

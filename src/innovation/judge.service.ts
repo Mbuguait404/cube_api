@@ -326,6 +326,26 @@ export class JudgeService {
       this.scoreModel.find().lean().exec(),
     ]);
 
+    const applicantIds = new Set((applicants as any[]).map((a: any) => a.id));
+    const tracks = new Set((applicants as any[]).map((a: any) => a.challengeTrack));
+
+    const trackCounts: Record<string, number> = {};
+    for (const a of applicants as any[]) {
+      const track = a.challengeTrack;
+      if (!trackCounts[track]) trackCounts[track] = 0;
+      trackCounts[track]++;
+    }
+
+    const tracksWithCounts = [...tracks].map(track => ({
+      name: track,
+      count: trackCounts[track as string] || 0
+    }));
+
+    // Count applicants where all judges who scored anyone have also scored this applicant
+    const scoreCountByApplicant = new Map<string, number>();
+    for (const s of allScores) {
+      scoreCountByApplicant.set(s.applicantId, (scoreCountByApplicant.get(s.applicantId) ?? 0) + 1);
+    }
     const applicantIds = new Set(applicants.map((a: any) => a.id));
     const tracks = new Set(applicants.map((a: any) => a.challengeTrack));
 
@@ -333,7 +353,7 @@ export class JudgeService {
       totalEligible: applicantIds.size,
       totalTracks: tracks.size,
       myScoresSubmitted: myScores.filter((s) => applicantIds.has(s.applicantId)).length,
-      tracks: [...tracks],
+      tracks: tracksWithCounts,
     };
   }
 }

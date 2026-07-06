@@ -27,7 +27,9 @@ async function bootstrap() {
       'http://localhost:8080',
       'https://cube-hub-website.vercel.app',
       'https://www.the-cube.co.ke',
-      'https://the-cube.co.ke'
+      'https://the-cube.co.ke',
+      /^http:\/\/localhost:\d+$/,
+      /^http:\/\/127\.0\.0\.1:\d+$/
     ],
     credentials: true,
   });

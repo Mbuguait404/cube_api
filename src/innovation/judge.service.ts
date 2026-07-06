@@ -346,8 +346,6 @@ export class JudgeService {
     for (const s of allScores) {
       scoreCountByApplicant.set(s.applicantId, (scoreCountByApplicant.get(s.applicantId) ?? 0) + 1);
     }
-    const applicantIds = new Set(applicants.map((a: any) => a.id));
-    const tracks = new Set(applicants.map((a: any) => a.challengeTrack));
 
     return {
       totalEligible: applicantIds.size,

@@ -28,6 +28,26 @@ export class CmsBridgeService {
         'x-tenant-id': this.tenantId,
       },
     });
+
+    this.client.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        if (error.response?.status === 401 && !originalRequest._retry && originalRequest.headers?.Authorization) {
+          originalRequest._retry = true;
+          this.accessToken = null;
+          this.tokenExpiry = 0;
+          try {
+            const token = await this.getToken();
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return this.client(originalRequest);
+          } catch (retryErr: any) {
+            return Promise.reject(retryErr);
+          }
+        }
+        return Promise.reject(error);
+      },
+    );
   }
 
   // ─── Auth (service-account login to CMS) ──────────────────────────────────

@@ -124,8 +124,13 @@ export class InnovationService {
       this.phase2Model.countDocuments({ matchStatus: 'matched' }).exec(),
     ]);
 
-    const applicationsResult = await this.cmsBridge.getInnovationChallenges({ page: 1, limit: 1 });
-    const totalPhase1 = applicationsResult.meta.total;
+    let totalPhase1 = 0;
+    try {
+      const applicationsResult = await this.cmsBridge.getInnovationChallenges({ page: 1, limit: 1 });
+      totalPhase1 = applicationsResult.meta.total;
+    } catch (err: any) {
+      this.logger.error(`[Innovation Service] Failed to fetch Phase 1 count from CMS: ${err?.message || err}`);
+    }
 
     return {
       totalPhase1,

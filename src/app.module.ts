@@ -23,6 +23,7 @@ import { ChatModule } from './chat/chat.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { InnovationModule } from './innovation/innovation.module';
 import { FeedbackSubmissionsModule } from './feedback-submissions/feedback-submissions.module';
+import { SmeLoopFeedbackModule } from './sme-loop-feedback/sme-loop-feedback.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { FeedbackSubmissionsModule } from './feedback-submissions/feedback-submi
     NotificationsModule,
     InnovationModule,
     FeedbackSubmissionsModule,
+    SmeLoopFeedbackModule,
   ],
   providers: [
     {

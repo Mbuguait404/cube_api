@@ -29,6 +29,9 @@ export class SmeLoopFeedback {
   @Prop({ required: true })
   challenges: string;
 
+  @Prop({ type: [String], required: true, default: [] })
+  interests: string[];
+
   @Prop()
   comments: string;
 }

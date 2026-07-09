@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsNotEmpty, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateSmeLoopFeedbackDto {
@@ -40,6 +40,12 @@ export class CreateSmeLoopFeedbackDto {
   @IsNotEmpty()
   @IsString()
   challenges: string;
+
+  @ApiProperty({ type: [String] })
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty()
+  interests: string[];
 
   @ApiPropertyOptional()
   @IsOptional()

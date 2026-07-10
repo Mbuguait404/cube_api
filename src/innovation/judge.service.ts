@@ -274,6 +274,8 @@ export class JudgeService {
         detailedScores: scores.map((s) => ({
           judgeName: s.judgeName || 'Judge',
           totalScore: s.totalScore,
+          scores: s.scores instanceof Map ? Object.fromEntries(s.scores) : s.scores,
+          remarks: s.remarks,
         })),
         judgeCount: scores.length,
         matchedAt: a.matchedAt,
@@ -308,6 +310,26 @@ export class JudgeService {
     }
 
     return { data: result, criteria: JUDGE_CRITERIA };
+  }
+
+  /**
+   * Public shortlist
+   */
+  async getPublicShortlist() {
+    const leaderboard = await this.getLeaderboard();
+    const shortlisted = leaderboard.data.filter((r) => r.shortlisted);
+    
+    // Clean data for public view
+    const publicData = shortlisted.map((r) => ({
+      applicantId: r.applicantId,
+      track: r.track,
+      projectTitle: r.projectTitle,
+      organization: r.organization,
+      averageScore: r.averageScore,
+      projectStage: r.projectStage,
+    }));
+
+    return { data: publicData };
   }
 
   /** Summary stats for the portal home page */

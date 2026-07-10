@@ -16,16 +16,26 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
+import { JudgeService } from './judge.service';
 
 @ApiTags('Innovation Challenge Phase 2')
 @Controller('innovation-challenges-phase2')
 export class InnovationController {
-  constructor(private readonly service: InnovationService) {}
+  constructor(
+    private readonly service: InnovationService,
+    private readonly judgeService: JudgeService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Submit Phase 2 materials (Public)' })
   create(@Body() dto: CreateInnovationPhase2Dto) {
     return this.service.create(dto);
+  }
+
+  @Get('public-shortlist')
+  @ApiOperation({ summary: 'Get public shortlisted applicants (Public)' })
+  getPublicShortlist() {
+    return this.judgeService.getPublicShortlist();
   }
 
   @ApiBearerAuth()

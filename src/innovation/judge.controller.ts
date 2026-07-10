@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   Param,
   UseGuards,
@@ -87,5 +88,20 @@ export class JudgeController {
   @ApiOperation({ summary: 'Get ranked leaderboard across all tracks' })
   getLeaderboard() {
     return this.judgeService.getLeaderboard();
+  }
+
+  // ─── Settings ─────────────────────────────────────────────────────────────
+
+  @Get('settings')
+  @ApiOperation({ summary: 'Get innovation settings' })
+  getSettings() {
+    return this.judgeService.getSettings();
+  }
+
+  @Patch('settings')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Update innovation settings (Admin only)' })
+  updateSettings(@Body('isPublicShortlistVisible') isPublicShortlistVisible: boolean) {
+    return this.judgeService.updateSettings(isPublicShortlistVisible);
   }
 }

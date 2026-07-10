@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { JudgeScore, JudgeScoreDocument } from './schemas/judge-score.schema';
 import { InnovationPhase2, InnovationPhase2Document } from './schemas/innovation-phase2.schema';
 import { InnovationChallengeApplication, InnovationChallengeApplicationDocument } from './schemas/innovation-challenge-application.schema';
+import { InnovationSettings, InnovationSettingsDocument } from './schemas/innovation-settings.schema';
 import { CmsBridgeService } from '../integrations/cms-bridge/cms-bridge.service';
 import { CreateJudgeScoreDto } from './dto/create-judge-score.dto';
 
@@ -29,6 +30,8 @@ export class JudgeService {
     private readonly phase2Model: Model<InnovationPhase2Document>,
     @InjectModel(InnovationChallengeApplication.name)
     private readonly challengeAppModel: Model<InnovationChallengeApplicationDocument>,
+    @InjectModel(InnovationSettings.name)
+    private readonly settingsModel: Model<InnovationSettingsDocument>,
     private readonly cmsBridge: CmsBridgeService,
   ) {}
 
@@ -316,6 +319,11 @@ export class JudgeService {
    * Public shortlist
    */
   async getPublicShortlist() {
+    const settings = await this.getSettings();
+    if (!settings.isPublicShortlistVisible) {
+      return { data: [], isPublicShortlistVisible: false };
+    }
+
     const leaderboard = await this.getLeaderboard();
     const shortlisted = leaderboard.data.filter((r) => r.shortlisted);
     
@@ -329,7 +337,26 @@ export class JudgeService {
       projectStage: r.projectStage,
     }));
 
-    return { data: publicData };
+    return { data: publicData, isPublicShortlistVisible: true };
+  }
+
+  // ─── Settings ─────────────────────────────────────────────────────────────
+
+  async getSettings() {
+    let settings = await this.settingsModel.findOne().exec();
+    if (!settings) {
+      settings = await this.settingsModel.create({ isPublicShortlistVisible: false });
+    }
+    return settings;
+  }
+
+  async updateSettings(isPublicShortlistVisible: boolean) {
+    let settings = await this.settingsModel.findOne().exec();
+    if (!settings) {
+      settings = new this.settingsModel();
+    }
+    settings.isPublicShortlistVisible = isPublicShortlistVisible;
+    return settings.save();
   }
 
   /** Summary stats for the portal home page */

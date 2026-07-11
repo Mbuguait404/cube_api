@@ -26,8 +26,8 @@ export class CreateCommunityHealthFeedbackDto {
   @IsString()
   countyOfResidence: string;
 
-  @ApiProperty({ enum: ['Community Health Volunteer (CHV)', 'Community Health Assistant (CHA)', 'Youth (18-35)', 'Health Worker', 'Entrepreneur', 'Student', 'Other'] })
-  @IsEnum(['Community Health Volunteer (CHV)', 'Community Health Assistant (CHA)', 'Youth (18-35)', 'Health Worker', 'Entrepreneur', 'Student', 'Other'])
+  @ApiProperty({ enum: ['Health Leadership, Employment & Sustainability', 'Innovations & Product Development', 'Health Entrepreneurship & Enterprise Development', 'Community Health Improvement (Challenges & Opportunities)'] })
+  @IsEnum(['Health Leadership, Employment & Sustainability', 'Innovations & Product Development', 'Health Entrepreneurship & Enterprise Development', 'Community Health Improvement (Challenges & Opportunities)'])
   beneficiaryCategory: string;
 
   @ApiProperty()

@@ -6,34 +6,40 @@ export type SmeLoopFeedbackDocument = SmeLoopFeedback & Document;
 @Schema({ timestamps: true })
 export class SmeLoopFeedback {
   @Prop({ required: true, trim: true })
-  name: string;
+  name!: string;
 
   @Prop({ required: true, trim: true })
-  phoneNumber: string;
+  phoneNumber!: string;
 
   @Prop({ required: true, trim: true })
-  emailAddress: string;
+  emailAddress!: string;
 
   @Prop({ required: true, trim: true })
-  businessName: string;
+  businessName!: string;
 
   @Prop({ required: true, enum: ['Yes', 'No'] })
-  isRegistered: string;
+  isRegistered!: string;
 
   @Prop({ required: true, trim: true })
-  businessAge: string;
+  businessAge!: string;
 
   @Prop({ required: true, trim: true })
-  location: string;
+  location!: string;
 
   @Prop({ required: true })
-  challenges: string;
+  challenges!: string;
 
   @Prop({ type: [String], required: true, default: [] })
-  interests: string[];
+  interests!: string[];
+
+  @Prop({ required: true })
+  expectations!: string;
+
+  @Prop({ required: true })
+  areasForHelp!: string;
 
   @Prop()
-  comments: string;
+  comments!: string;
 }
 
 export const SmeLoopFeedbackSchema = SchemaFactory.createForClass(SmeLoopFeedback);

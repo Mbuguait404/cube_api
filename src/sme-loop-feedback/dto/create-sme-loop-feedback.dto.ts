@@ -5,47 +5,57 @@ export class CreateSmeLoopFeedbackDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  name: string;
+  name!: string;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  phoneNumber: string;
+  phoneNumber!: string;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  emailAddress: string;
+  emailAddress!: string;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  businessName: string;
+  businessName!: string;
 
   @ApiProperty({ enum: ['Yes', 'No'] })
   @IsEnum(['Yes', 'No'])
-  isRegistered: string;
+  isRegistered!: string;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  businessAge: string;
+  businessAge!: string;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  location: string;
+  location!: string;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  challenges: string;
+  challenges!: string;
 
   @ApiProperty({ type: [String] })
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty()
-  interests: string[];
+  interests!: string[];
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  expectations!: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  areasForHelp!: string;
 
   @ApiPropertyOptional()
   @IsOptional()

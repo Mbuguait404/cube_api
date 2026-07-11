@@ -20,7 +20,7 @@ export class CommunityHealthFeedback {
   @Prop({ required: true, trim: true })
   countyOfResidence: string;
 
-  @Prop({ required: true, enum: ['Community Health Volunteer (CHV)', 'Community Health Assistant (CHA)', 'Youth (18-35)', 'Health Worker', 'Entrepreneur', 'Student', 'Other'] })
+  @Prop({ required: true, enum: ['Health Leadership, Employment & Sustainability', 'Innovations & Product Development', 'Health Entrepreneurship & Enterprise Development', 'Community Health Improvement (Challenges & Opportunities)'] })
   beneficiaryCategory: string;
 
   @Prop({ required: true })

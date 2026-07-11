@@ -17,8 +17,11 @@ export class CommunityHealthFeedback {
   @Prop({ required: true, trim: true })
   email: string;
 
+  @Prop({ required: true, enum: ['Soy', 'Turbo', 'Moiben', 'Kapseret', 'Kesses', 'Ainabkoi'] })
+  subCounty: string;
+
   @Prop({ required: true, trim: true })
-  countyOfResidence: string;
+  ward: string;
 
   @Prop({ required: true, enum: ['Health Leadership, Employment & Sustainability', 'Innovations & Product Development', 'Health Entrepreneurship & Enterprise Development', 'Community Health Improvement (Challenges & Opportunities)'] })
   beneficiaryCategory: string;

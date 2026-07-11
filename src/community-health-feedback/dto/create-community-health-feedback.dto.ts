@@ -21,10 +21,14 @@ export class CreateCommunityHealthFeedbackDto {
   @IsString()
   email: string;
 
+  @ApiProperty({ enum: ['Soy', 'Turbo', 'Moiben', 'Kapseret', 'Kesses', 'Ainabkoi'] })
+  @IsEnum(['Soy', 'Turbo', 'Moiben', 'Kapseret', 'Kesses', 'Ainabkoi'])
+  subCounty: string;
+
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  countyOfResidence: string;
+  ward: string;
 
   @ApiProperty({ enum: ['Health Leadership, Employment & Sustainability', 'Innovations & Product Development', 'Health Entrepreneurship & Enterprise Development', 'Community Health Improvement (Challenges & Opportunities)'] })
   @IsEnum(['Health Leadership, Employment & Sustainability', 'Innovations & Product Development', 'Health Entrepreneurship & Enterprise Development', 'Community Health Improvement (Challenges & Opportunities)'])

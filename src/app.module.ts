@@ -24,6 +24,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { InnovationModule } from './innovation/innovation.module';
 import { FeedbackSubmissionsModule } from './feedback-submissions/feedback-submissions.module';
 import { SmeLoopFeedbackModule } from './sme-loop-feedback/sme-loop-feedback.module';
+import { CommunityHealthFeedbackModule } from './community-health-feedback/community-health-feedback.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { SmeLoopFeedbackModule } from './sme-loop-feedback/sme-loop-feedback.mod
     InnovationModule,
     FeedbackSubmissionsModule,
     SmeLoopFeedbackModule,
+    CommunityHealthFeedbackModule,
   ],
   providers: [
     {

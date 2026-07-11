@@ -32,6 +32,12 @@ export class SmeLoopFeedback {
   @Prop({ type: [String], required: true, default: [] })
   interests: string[];
 
+  @Prop({ required: true })
+  expectations: string;
+
+  @Prop({ required: true })
+  areasForHelp: string;
+
   @Prop()
   comments: string;
 }

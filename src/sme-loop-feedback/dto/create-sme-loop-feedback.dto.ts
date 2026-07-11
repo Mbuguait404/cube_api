@@ -47,6 +47,16 @@ export class CreateSmeLoopFeedbackDto {
   @IsNotEmpty()
   interests: string[];
 
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  expectations: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  areasForHelp: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

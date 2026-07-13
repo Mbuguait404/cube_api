@@ -6,58 +6,58 @@ export type CommunityHealthFeedbackDocument = CommunityHealthFeedback & Document
 @Schema({ timestamps: true })
 export class CommunityHealthFeedback {
   @Prop({ required: true, trim: true })
-  fullName: string;
+  fullName!: string;
 
   @Prop({ required: true, enum: ['Male', 'Female', 'Other', 'Prefer not to say'] })
-  gender: string;
+  gender!: string;
 
   @Prop({ required: true, trim: true })
-  phoneNumber: string;
+  phoneNumber!: string;
 
   @Prop({ required: true, trim: true })
-  email: string;
-
-  @Prop({ required: true, enum: ['Soy', 'Turbo', 'Moiben', 'Kapseret', 'Kesses', 'Ainabkoi'] })
-  subCounty: string;
+  email!: string;
 
   @Prop({ required: true, trim: true })
-  ward: string;
+  subCounty!: string;
+
+  @Prop({ required: true, trim: true })
+  ward!: string;
 
   @Prop({ required: true, enum: ['Health Leadership, Employment & Sustainability', 'Innovations & Product Development', 'Health Entrepreneurship & Enterprise Development', 'Community Health Improvement (Challenges & Opportunities)'] })
-  beneficiaryCategory: string;
+  beneficiaryCategory!: string;
 
   @Prop({ required: true })
-  communityHealthChallenge: string;
+  communityHealthChallenge!: string;
 
   @Prop({ enum: ['Yes', 'No', ''] })
-  hasExistingIdea: string;
+  hasExistingIdea!: string;
 
   @Prop()
-  existingIdeaDescription: string;
+  existingIdeaDescription!: string;
 
   @Prop()
-  reasonToParticipate: string;
+  reasonToParticipate!: string;
 
   @Prop()
-  planToApplyKnowledge: string;
+  planToApplyKnowledge!: string;
 
   @Prop({ required: true, enum: ['1-10', '11-50', '51-100', '101-500', '500+'] })
-  expectedBeneficiaries: string;
+  expectedBeneficiaries!: string;
 
   @Prop({ required: true, enum: ['Yes', 'No'] })
-  willingToParticipateFully: string;
+  willingToParticipateFully!: string;
 
   @Prop({ required: true, enum: ['Yes', 'No'] })
-  previouslyParticipated: string;
+  previouslyParticipated!: string;
 
   @Prop()
-  previousParticipationDetails: string;
+  previousParticipationDetails!: string;
 
   @Prop({ required: true })
-  desiredCommunityChange: string;
+  desiredCommunityChange!: string;
 
   @Prop({ default: false })
-  agreeToBeContacted: boolean;
+  agreeToBeContacted!: boolean;
 }
 
 export const CommunityHealthFeedbackSchema = SchemaFactory.createForClass(CommunityHealthFeedback);

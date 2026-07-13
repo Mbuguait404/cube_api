@@ -5,39 +5,40 @@ export class CreateCommunityHealthFeedbackDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  fullName: string;
+  fullName!: string;
 
   @ApiProperty({ enum: ['Male', 'Female', 'Other', 'Prefer not to say'] })
   @IsEnum(['Male', 'Female', 'Other', 'Prefer not to say'])
-  gender: string;
+  gender!: string;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  phoneNumber: string;
+  phoneNumber!: string;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  email: string;
-
-  @ApiProperty({ enum: ['Soy', 'Turbo', 'Moiben', 'Kapseret', 'Kesses', 'Ainabkoi'] })
-  @IsEnum(['Soy', 'Turbo', 'Moiben', 'Kapseret', 'Kesses', 'Ainabkoi'])
-  subCounty: string;
+  email!: string;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  ward: string;
+  subCounty!: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  ward!: string;
 
   @ApiProperty({ enum: ['Health Leadership, Employment & Sustainability', 'Innovations & Product Development', 'Health Entrepreneurship & Enterprise Development', 'Community Health Improvement (Challenges & Opportunities)'] })
   @IsEnum(['Health Leadership, Employment & Sustainability', 'Innovations & Product Development', 'Health Entrepreneurship & Enterprise Development', 'Community Health Improvement (Challenges & Opportunities)'])
-  beneficiaryCategory: string;
+  beneficiaryCategory!: string;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  communityHealthChallenge: string;
+  communityHealthChallenge!: string;
 
   @ApiPropertyOptional({ enum: ['Yes', 'No', ''] })
   @IsOptional()
@@ -61,15 +62,15 @@ export class CreateCommunityHealthFeedbackDto {
 
   @ApiProperty({ enum: ['1-10', '11-50', '51-100', '101-500', '500+'] })
   @IsEnum(['1-10', '11-50', '51-100', '101-500', '500+'])
-  expectedBeneficiaries: string;
+  expectedBeneficiaries!: string;
 
   @ApiProperty({ enum: ['Yes', 'No'] })
   @IsEnum(['Yes', 'No'])
-  willingToParticipateFully: string;
+  willingToParticipateFully!: string;
 
   @ApiProperty({ enum: ['Yes', 'No'] })
   @IsEnum(['Yes', 'No'])
-  previouslyParticipated: string;
+  previouslyParticipated!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -79,7 +80,7 @@ export class CreateCommunityHealthFeedbackDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  desiredCommunityChange: string;
+  desiredCommunityChange!: string;
 
   @ApiPropertyOptional()
   @IsOptional()

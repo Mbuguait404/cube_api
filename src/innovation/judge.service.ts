@@ -303,10 +303,16 @@ export class JudgeService {
         return new Date(a.matchedAt).getTime() - new Date(b.matchedAt).getTime();
       });
 
+      const isHealthTrack = (row: { track?: string }) => {
+        const trackName = (row.track || '').trim().toLowerCase();
+        return trackName === 'medical & healthtech' || trackName === 'healthtech' || trackName === 'medical-healthtech';
+      };
+
+      const shortlistLimit = trackRows.length <= 3 ? trackRows.length : isHealthTrack(trackRows[0]) ? 6 : 3;
+
       trackRows.forEach((row, idx) => {
         row.rank = idx + 1;
-        // All shortlisted if ≤ 3 eligible in track, otherwise top 3
-        row.shortlisted = trackRows.length <= 3 ? true : idx < 3;
+        row.shortlisted = trackRows.length <= shortlistLimit ? true : idx < shortlistLimit;
       });
 
       result.push(...trackRows);

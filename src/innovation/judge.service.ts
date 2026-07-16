@@ -308,7 +308,18 @@ export class JudgeService {
         return trackName === 'medical & healthtech' || trackName === 'healthtech' || trackName === 'medical-healthtech';
       };
 
-      const shortlistLimit = trackRows.length <= 3 ? trackRows.length : isHealthTrack(trackRows[0]) ? 6 : 3;
+      const isFintechTrack = (row: { track?: string }) => {
+        const trackName = (row.track || '').trim().toLowerCase();
+        return trackName.includes('fintech') || trackName === 'fintech & digital economy';
+      };
+
+      const shortlistLimit = trackRows.length <= 3
+        ? trackRows.length
+        : isHealthTrack(trackRows[0])
+        ? 6
+        : isFintechTrack(trackRows[0])
+        ? 4
+        : 3;
 
       trackRows.forEach((row, idx) => {
         row.rank = idx + 1;

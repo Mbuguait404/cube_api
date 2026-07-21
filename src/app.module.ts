@@ -26,6 +26,7 @@ import { FeedbackSubmissionsModule } from './feedback-submissions/feedback-submi
 import { SmeLoopFeedbackModule } from './sme-loop-feedback/sme-loop-feedback.module';
 import { CommunityHealthFeedbackModule } from './community-health-feedback/community-health-feedback.module';
 import { HackathonFeedbackModule } from './hackathon-feedback/hackathon-feedback.module';
+import { IncubatorModule } from './incubator/incubator.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { HackathonFeedbackModule } from './hackathon-feedback/hackathon-feedback
     ChatModule,
     NotificationsModule,
     InnovationModule,
+    IncubatorModule,
     FeedbackSubmissionsModule,
     SmeLoopFeedbackModule,
     CommunityHealthFeedbackModule,

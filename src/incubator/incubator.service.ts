@@ -293,6 +293,7 @@ export class IncubatorService {
       .populate('members', 'firstName lastName email')
       .exec();
 
+    if (!updated) throw new NotFoundException('Cohort not found after enrollment');
     return { ...updated.toObject(), memberCount: updated.members.length };
   }
 

@@ -1,7 +1,11 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { JudgeScore, JudgeScoreDocument } from './schemas/judge-score.schema';
+import {
+  JudgeScore,
+  JudgeScoreDocument,
+  JudgeScoreRound,
+} from './schemas/judge-score.schema';
 import { InnovationPhase2, InnovationPhase2Document } from './schemas/innovation-phase2.schema';
 import { InnovationChallengeApplication, InnovationChallengeApplicationDocument } from './schemas/innovation-challenge-application.schema';
 import { InnovationSettings, InnovationSettingsDocument } from './schemas/innovation-settings.schema';
@@ -180,16 +184,19 @@ export class JudgeService {
   async submitScore(dto: CreateJudgeScoreDto, judgeId: string, judgeName: string) {
     const now = new Date();
     const judgeOid = new Types.ObjectId(judgeId);
+    const round = dto.round ?? JudgeScoreRound.GENERAL;
 
     const existing = await this.scoreModel.findOne({
       applicantId: dto.applicantId,
       judgeId: judgeOid,
+      round,
     }).exec();
 
     if (existing) {
       existing.scores = new Map(Object.entries(dto.scores));
       existing.totalScore = dto.totalScore;
       existing.remarks = dto.remarks ?? existing.remarks;
+      existing.round = round;
       existing.lastUpdatedAt = now;
       return existing.save();
     }
@@ -199,6 +206,7 @@ export class JudgeService {
       track: dto.track,
       judgeId: judgeOid,
       judgeName,
+      round,
       scores: new Map(Object.entries(dto.scores)),
       totalScore: dto.totalScore,
       remarks: dto.remarks ?? '',
@@ -214,9 +222,13 @@ export class JudgeService {
    * Implements blind scoring: peer data is masked until the requesting judge
    * has submitted their own score.
    */
-  async getScoresForApplicant(applicantId: string, requestingJudgeId: string) {
+  async getScoresForApplicant(
+    applicantId: string,
+    requestingJudgeId: string,
+    round: JudgeScoreRound = JudgeScoreRound.GENERAL,
+  ) {
     const scores = await this.scoreModel
-      .find({ applicantId })
+      .find({ applicantId, round })
       .lean()
       .exec();
 
@@ -239,18 +251,27 @@ export class JudgeService {
   }
 
   /** All scores submitted by this judge */
-  async getMyScores(judgeId: string) {
+  async getMyScores(
+    judgeId: string,
+    round: JudgeScoreRound = JudgeScoreRound.GENERAL,
+  ) {
     return this.scoreModel
-      .find({ judgeId: new Types.ObjectId(judgeId) })
+      .find({
+        judgeId: new Types.ObjectId(judgeId),
+        round,
+      })
       .lean()
       .exec();
   }
 
   // ─── Leaderboard ──────────────────────────────────────────────────────────
 
-  async getLeaderboard() {
+  async getLeaderboard(round: JudgeScoreRound = JudgeScoreRound.GENERAL) {
     const { data: applicants } = await this.getEligibleApplicants();
-    const allScores = await this.scoreModel.find().lean().exec();
+    const allScores = await this.scoreModel
+      .find({ round })
+      .lean()
+      .exec();
 
     // Group scores by applicantId
     const scoresByApplicant = new Map<string, any[]>();
@@ -341,7 +362,7 @@ export class JudgeService {
       return { data: [], isPublicShortlistVisible: false };
     }
 
-    const leaderboard = await this.getLeaderboard();
+    const leaderboard = await this.getLeaderboard(JudgeScoreRound.FINALIST);
     const shortlisted = leaderboard.data.filter((r) => r.shortlisted);
     
     // Clean data for public view

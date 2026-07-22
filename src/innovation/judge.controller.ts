@@ -15,6 +15,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 import { JudgeService, JUDGE_CRITERIA } from './judge.service';
 import { CreateJudgeScoreDto } from './dto/create-judge-score.dto';
+import { JudgeScoreRound } from './schemas/judge-score.schema';
 
 @ApiTags('Judge Portal')
 @ApiBearerAuth()
@@ -67,7 +68,14 @@ export class JudgeController {
   @ApiOperation({ summary: "Get current judge's submitted scores" })
   getMyScores(@CurrentUser() user: any) {
     const judgeId = user._id ? user._id.toString() : user.sub;
-    return this.judgeService.getMyScores(judgeId);
+    return this.judgeService.getMyScores(judgeId, JudgeScoreRound.GENERAL);
+  }
+
+  @Get('scores/me/finalist')
+  @ApiOperation({ summary: "Get current finalist judge's submitted scores" })
+  getMyFinalistScores(@CurrentUser() user: any) {
+    const judgeId = user._id ? user._id.toString() : user.sub;
+    return this.judgeService.getMyScores(judgeId, JudgeScoreRound.FINALIST);
   }
 
   @Get('scores/:applicantId')
@@ -79,7 +87,28 @@ export class JudgeController {
     @CurrentUser() user: any,
   ) {
     const judgeId = user._id ? user._id.toString() : user.sub;
-    return this.judgeService.getScoresForApplicant(applicantId, judgeId);
+    return this.judgeService.getScoresForApplicant(
+      applicantId,
+      judgeId,
+      JudgeScoreRound.GENERAL,
+    );
+  }
+
+  @Get('scores/:applicantId/finalist')
+  @ApiOperation({
+    summary:
+      'Get finalist-round scores for an applicant (peer scores hidden until own submission)',
+  })
+  getFinalistScoresForApplicant(
+    @Param('applicantId') applicantId: string,
+    @CurrentUser() user: any,
+  ) {
+    const judgeId = user._id ? user._id.toString() : user.sub;
+    return this.judgeService.getScoresForApplicant(
+      applicantId,
+      judgeId,
+      JudgeScoreRound.FINALIST,
+    );
   }
 
   // ─── Leaderboard ──────────────────────────────────────────────────────────
@@ -87,7 +116,13 @@ export class JudgeController {
   @Get('leaderboard')
   @ApiOperation({ summary: 'Get ranked leaderboard across all tracks' })
   getLeaderboard() {
-    return this.judgeService.getLeaderboard();
+    return this.judgeService.getLeaderboard(JudgeScoreRound.GENERAL);
+  }
+
+  @Get('leaderboard/finalist')
+  @ApiOperation({ summary: 'Get finalist ranked leaderboard across all tracks' })
+  getFinalistLeaderboard() {
+    return this.judgeService.getLeaderboard(JudgeScoreRound.FINALIST);
   }
 
   // ─── Settings ─────────────────────────────────────────────────────────────

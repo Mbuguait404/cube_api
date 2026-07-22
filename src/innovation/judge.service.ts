@@ -6,6 +6,10 @@ import {
   JudgeScoreDocument,
   JudgeScoreRound,
 } from './schemas/judge-score.schema';
+import {
+  FinalistJudgeScore,
+  FinalistJudgeScoreDocument,
+} from './schemas/finalist-judge-score.schema';
 import { InnovationPhase2, InnovationPhase2Document } from './schemas/innovation-phase2.schema';
 import { InnovationChallengeApplication, InnovationChallengeApplicationDocument } from './schemas/innovation-challenge-application.schema';
 import { InnovationSettings, InnovationSettingsDocument } from './schemas/innovation-settings.schema';
@@ -30,6 +34,8 @@ export class JudgeService {
   constructor(
     @InjectModel(JudgeScore.name)
     private readonly scoreModel: Model<JudgeScoreDocument>,
+    @InjectModel(FinalistJudgeScore.name)
+    private readonly finalistScoreModel: Model<FinalistJudgeScoreDocument>,
     @InjectModel(InnovationPhase2.name)
     private readonly phase2Model: Model<InnovationPhase2Document>,
     @InjectModel(InnovationChallengeApplication.name)
@@ -215,6 +221,40 @@ export class JudgeService {
     });
   }
 
+  async submitFinalistScore(
+    dto: CreateJudgeScoreDto,
+    judgeId: string,
+    judgeName: string,
+  ) {
+    const now = new Date();
+    const judgeOid = new Types.ObjectId(judgeId);
+
+    const existing = await this.finalistScoreModel.findOne({
+      applicantId: dto.applicantId,
+      judgeId: judgeOid,
+    }).exec();
+
+    if (existing) {
+      existing.scores = new Map(Object.entries(dto.scores));
+      existing.totalScore = dto.totalScore;
+      existing.remarks = dto.remarks ?? existing.remarks;
+      existing.lastUpdatedAt = now;
+      return existing.save();
+    }
+
+    return this.finalistScoreModel.create({
+      applicantId: dto.applicantId,
+      track: dto.track,
+      judgeId: judgeOid,
+      judgeName,
+      scores: new Map(Object.entries(dto.scores)),
+      totalScore: dto.totalScore,
+      remarks: dto.remarks ?? '',
+      submittedAt: now,
+      lastUpdatedAt: now,
+    });
+  }
+
   // ─── Score Queries ────────────────────────────────────────────────────────
 
   /**
@@ -250,6 +290,29 @@ export class JudgeService {
     };
   }
 
+  async getFinalistScoresForApplicant(
+    applicantId: string,
+    requestingJudgeId: string,
+  ) {
+    const scores = await this.finalistScoreModel.find({ applicantId }).lean().exec();
+
+    const myScore = scores.find((s) => String(s.judgeId) === requestingJudgeId);
+    const hasSubmitted = Boolean(myScore);
+
+    return {
+      hasSubmitted,
+      myScore: myScore ?? null,
+      peerScores: hasSubmitted
+        ? scores.filter((s) => String(s.judgeId) !== requestingJudgeId)
+        : [],
+      totalJudges: scores.length,
+      averageScore:
+        scores.length > 0
+          ? Math.round((scores.reduce((acc, s) => acc + s.totalScore, 0) / scores.length) * 10) / 10
+          : null,
+    };
+  }
+
   /** All scores submitted by this judge */
   async getMyScores(
     judgeId: string,
@@ -260,6 +323,13 @@ export class JudgeService {
         judgeId: new Types.ObjectId(judgeId),
         round,
       })
+      .lean()
+      .exec();
+  }
+
+  async getMyFinalistScores(judgeId: string) {
+    return this.finalistScoreModel
+      .find({ judgeId: new Types.ObjectId(judgeId) })
       .lean()
       .exec();
   }
@@ -353,6 +423,86 @@ export class JudgeService {
     return { data: result, criteria: JUDGE_CRITERIA };
   }
 
+  async getFinalistLeaderboard() {
+    const { data: applicants } = await this.getEligibleApplicants();
+    const allScores = await this.finalistScoreModel.find().lean().exec();
+
+    const scoresByApplicant = new Map<string, any[]>();
+    for (const s of allScores) {
+      const list = scoresByApplicant.get(s.applicantId) ?? [];
+      list.push(s);
+      scoresByApplicant.set(s.applicantId, list);
+    }
+
+    const rows = applicants.map((a: any) => {
+      const scores = scoresByApplicant.get(a.id) ?? [];
+      const avg =
+        scores.length > 0
+          ? Math.round((scores.reduce((acc, s) => acc + s.totalScore, 0) / scores.length) * 10) / 10
+          : 0;
+      return {
+        applicantId: a.id,
+        track: a.challengeTrack,
+        projectTitle: a.projectTitle,
+        organization: a.organization,
+        projectStage: a.projectStage,
+        averageScore: avg,
+        detailedScores: scores.map((s) => ({
+          judgeName: s.judgeName || 'Judge',
+          totalScore: s.totalScore,
+          scores: s.scores instanceof Map ? Object.fromEntries(s.scores) : s.scores,
+          remarks: s.remarks,
+        })),
+        judgeCount: scores.length,
+        matchedAt: a.matchedAt,
+        shortlisted: false,
+        rank: 0,
+      };
+    });
+
+    const byTrack = new Map<string, typeof rows>();
+    for (const row of rows) {
+      const list = byTrack.get(row.track) ?? [];
+      list.push(row);
+      byTrack.set(row.track, list);
+    }
+
+    const result: typeof rows = [];
+    for (const [, trackRows] of byTrack) {
+      trackRows.sort((a, b) => {
+        if (b.averageScore !== a.averageScore) return b.averageScore - a.averageScore;
+        return new Date(a.matchedAt).getTime() - new Date(b.matchedAt).getTime();
+      });
+
+      const isHealthTrack = (row: { track?: string }) => {
+        const trackName = (row.track || '').trim().toLowerCase();
+        return trackName === 'medical & healthtech' || trackName === 'healthtech' || trackName === 'medical-healthtech';
+      };
+
+      const isFintechTrack = (row: { track?: string }) => {
+        const trackName = (row.track || '').trim().toLowerCase();
+        return trackName.includes('fintech') || trackName === 'fintech & digital economy';
+      };
+
+      const shortlistLimit = trackRows.length <= 3
+        ? trackRows.length
+        : isHealthTrack(trackRows[0])
+        ? 6
+        : isFintechTrack(trackRows[0])
+        ? 4
+        : 3;
+
+      trackRows.forEach((row, idx) => {
+        row.rank = idx + 1;
+        row.shortlisted = trackRows.length <= shortlistLimit ? true : idx < shortlistLimit;
+      });
+
+      result.push(...trackRows);
+    }
+
+    return { data: result, criteria: JUDGE_CRITERIA };
+  }
+
   /**
    * Public shortlist
    */
@@ -362,7 +512,7 @@ export class JudgeService {
       return { data: [], isPublicShortlistVisible: false };
     }
 
-    const leaderboard = await this.getLeaderboard(JudgeScoreRound.FINALIST);
+    const leaderboard = await this.getFinalistLeaderboard();
     const shortlisted = leaderboard.data.filter((r) => r.shortlisted);
     
     // Clean data for public view

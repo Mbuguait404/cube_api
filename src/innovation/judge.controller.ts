@@ -15,7 +15,6 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 import { JudgeService, JUDGE_CRITERIA } from './judge.service';
 import { CreateJudgeScoreDto } from './dto/create-judge-score.dto';
-import { JudgeScoreRound } from './schemas/judge-score.schema';
 
 @ApiTags('Judge Portal')
 @ApiBearerAuth()
@@ -69,25 +68,21 @@ export class JudgeController {
   submitFinalistScore(@Body() dto: CreateJudgeScoreDto, @CurrentUser() user: any) {
     const judgeId = user._id ? user._id.toString() : user.sub;
     const judgeName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email;
-    return this.judgeService.submitScore(
-      { ...dto, round: JudgeScoreRound.FINALIST },
-      judgeId,
-      judgeName,
-    );
+    return this.judgeService.submitFinalistScore(dto, judgeId, judgeName);
   }
 
   @Get('scores/me')
   @ApiOperation({ summary: "Get current judge's submitted scores" })
   getMyScores(@CurrentUser() user: any) {
     const judgeId = user._id ? user._id.toString() : user.sub;
-    return this.judgeService.getMyScores(judgeId, JudgeScoreRound.GENERAL);
+    return this.judgeService.getMyScores(judgeId);
   }
 
   @Get('scores/me/finalist')
   @ApiOperation({ summary: "Get current finalist judge's submitted scores" })
   getMyFinalistScores(@CurrentUser() user: any) {
     const judgeId = user._id ? user._id.toString() : user.sub;
-    return this.judgeService.getMyScores(judgeId, JudgeScoreRound.FINALIST);
+    return this.judgeService.getMyFinalistScores(judgeId);
   }
 
   @Get('scores/:applicantId')
@@ -99,11 +94,7 @@ export class JudgeController {
     @CurrentUser() user: any,
   ) {
     const judgeId = user._id ? user._id.toString() : user.sub;
-    return this.judgeService.getScoresForApplicant(
-      applicantId,
-      judgeId,
-      JudgeScoreRound.GENERAL,
-    );
+    return this.judgeService.getScoresForApplicant(applicantId, judgeId);
   }
 
   @Get('scores/:applicantId/finalist')
@@ -116,11 +107,7 @@ export class JudgeController {
     @CurrentUser() user: any,
   ) {
     const judgeId = user._id ? user._id.toString() : user.sub;
-    return this.judgeService.getScoresForApplicant(
-      applicantId,
-      judgeId,
-      JudgeScoreRound.FINALIST,
-    );
+    return this.judgeService.getFinalistScoresForApplicant(applicantId, judgeId);
   }
 
   // ─── Leaderboard ──────────────────────────────────────────────────────────
@@ -128,13 +115,13 @@ export class JudgeController {
   @Get('leaderboard')
   @ApiOperation({ summary: 'Get ranked leaderboard across all tracks' })
   getLeaderboard() {
-    return this.judgeService.getLeaderboard(JudgeScoreRound.GENERAL);
+    return this.judgeService.getLeaderboard();
   }
 
   @Get('leaderboard/finalist')
   @ApiOperation({ summary: 'Get finalist ranked leaderboard across all tracks' })
   getFinalistLeaderboard() {
-    return this.judgeService.getLeaderboard(JudgeScoreRound.FINALIST);
+    return this.judgeService.getFinalistLeaderboard();
   }
 
   // ─── Settings ─────────────────────────────────────────────────────────────

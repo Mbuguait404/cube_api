@@ -64,6 +64,18 @@ export class JudgeController {
     return this.judgeService.submitScore(dto, judgeId, judgeName);
   }
 
+  @Post('scores/finalist')
+  @ApiOperation({ summary: 'Submit or update own finalist-round score for an applicant' })
+  submitFinalistScore(@Body() dto: CreateJudgeScoreDto, @CurrentUser() user: any) {
+    const judgeId = user._id ? user._id.toString() : user.sub;
+    const judgeName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email;
+    return this.judgeService.submitScore(
+      { ...dto, round: JudgeScoreRound.FINALIST },
+      judgeId,
+      judgeName,
+    );
+  }
+
   @Get('scores/me')
   @ApiOperation({ summary: "Get current judge's submitted scores" })
   getMyScores(@CurrentUser() user: any) {

@@ -6,8 +6,11 @@ import { InnovationPhase2, InnovationPhase2Schema } from './schemas/innovation-p
 import { InnovationChallengeApplication, InnovationChallengeApplicationSchema } from './schemas/innovation-challenge-application.schema';
 import { JudgeScore, JudgeScoreSchema } from './schemas/judge-score.schema';
 import { InnovationSettings, InnovationSettingsSchema } from './schemas/innovation-settings.schema';
+import { PublicVote, PublicVoteSchema } from './schemas/public-vote.schema';
 import { JudgeService } from './judge.service';
 import { JudgeController } from './judge.controller';
+import { PublicVoteService } from './public-vote.service';
+import { PublicVoteController } from './public-vote.controller';
 import { CmsBridgeModule } from '../integrations/cms-bridge/cms-bridge.module';
 
 @Module({
@@ -17,12 +20,13 @@ import { CmsBridgeModule } from '../integrations/cms-bridge/cms-bridge.module';
       { name: InnovationChallengeApplication.name, schema: InnovationChallengeApplicationSchema },
       { name: JudgeScore.name, schema: JudgeScoreSchema },
       { name: InnovationSettings.name, schema: InnovationSettingsSchema },
+      { name: PublicVote.name, schema: PublicVoteSchema },
     ]),
     CmsBridgeModule,
   ],
-  controllers: [InnovationController, InnovationChallengeController, JudgeController],
-  providers: [InnovationService, JudgeService],
-  exports: [InnovationService, JudgeService],
+  controllers: [InnovationController, InnovationChallengeController, JudgeController, PublicVoteController],
+  providers: [InnovationService, JudgeService, PublicVoteService],
+  exports: [InnovationService, JudgeService, PublicVoteService],
 })
 export class InnovationModule {}
 

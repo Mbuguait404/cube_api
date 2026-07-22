@@ -367,12 +367,17 @@ export class JudgeService {
     return settings;
   }
 
-  async updateSettings(isPublicShortlistVisible: boolean) {
+  async updateSettings(updates: { isPublicShortlistVisible?: boolean; isPublicVotingOpen?: boolean }) {
     let settings = await this.settingsModel.findOne().exec();
     if (!settings) {
       settings = new this.settingsModel();
     }
-    settings.isPublicShortlistVisible = isPublicShortlistVisible;
+    if (updates.isPublicShortlistVisible !== undefined) {
+      settings.isPublicShortlistVisible = updates.isPublicShortlistVisible;
+    }
+    if (updates.isPublicVotingOpen !== undefined) {
+      (settings as any).isPublicVotingOpen = updates.isPublicVotingOpen;
+    }
     return settings.save();
   }
 

@@ -7,6 +7,9 @@ export type InnovationSettingsDocument = InnovationSettings & Document;
 export class InnovationSettings {
   @Prop({ default: false })
   isPublicShortlistVisible: boolean;
+
+  @Prop({ default: false })
+  isPublicVotingOpen: boolean;
 }
 
 export const InnovationSettingsSchema = SchemaFactory.createForClass(InnovationSettings);

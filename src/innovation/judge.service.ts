@@ -655,7 +655,8 @@ export class JudgeService {
   }
 
   /**
-   * Public shortlist
+   * Public shortlist — fetched directly from finalistshortlists
+   * and finalist scores. No Phase 1/Phase 2.
    */
   async getPublicShortlist() {
     const settings = await this.getSettings();
@@ -663,21 +664,35 @@ export class JudgeService {
       return { data: [], isPublicShortlistVisible: false };
     }
 
-    const leaderboard = await this.getFinalistLeaderboard();
-    const shortlisted = leaderboard.data.filter((r) => r.shortlisted);
-    
-    // Clean data for public view
-    const publicData = shortlisted.map((r) => ({
-      applicantId: r.applicantId,
-      track: r.track,
-      projectTitle: r.projectTitle,
-      organization: r.organization,
-      averageScore: r.averageScore,
-      projectStage: r.projectStage,
-      finalistName: r.finalistName,
-      phoneNumber: r.phoneNumber,
-      rankOnFinalistList: r.rankOnFinalistList,
-      originalRank: r.originalRank,
+    const entries = await this.getFinalistShortlistEntries();
+    const allScores = await this.finalistScoreModel.find().lean().exec();
+
+    const scoresByApplicant = new Map<string, number>();
+    const scoreCounts = new Map<string, number>();
+    for (const s of allScores) {
+      const id = s.applicantId;
+      scoresByApplicant.set(id, (scoresByApplicant.get(id) ?? 0) + s.totalScore);
+      scoreCounts.set(id, (scoreCounts.get(id) ?? 0) + 1);
+    }
+
+    const resolveScore = (applicantId: string): number => {
+      const sum = scoresByApplicant.get(applicantId);
+      const count = scoreCounts.get(applicantId);
+      if (sum == null || !count) return 0;
+      return Math.round((sum / count) * 10) / 10;
+    };
+
+    const publicData = entries.map((entry: any) => ({
+      applicantId: String(entry.applicantId),
+      track: entry.track,
+      projectTitle: entry.projectTitle,
+      organization: entry.organization,
+      projectStage: entry.projectStage,
+      finalistName: entry.finalistName,
+      phoneNumber: entry.phoneNumber,
+      averageScore: resolveScore(String(entry.applicantId)),
+      rankOnFinalistList: entry.rankOnFinalistList,
+      originalRank: entry.originalRank,
     }));
 
     return { data: publicData, isPublicShortlistVisible: true };

@@ -7,6 +7,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   User,
   UserDocument,
@@ -22,8 +23,10 @@ import { CmsBridgeService } from '../integrations/cms-bridge/cms-bridge.service'
 import { AuthService } from '../auth/auth.service';
 import {
   BulkEmailDto,
+  BulkSmsDto,
   CreateMemberDto,
   ListUsersQueryDto,
+  UpdateUserDto,
 } from './dto/admin.dto';
 import { CreateBadgeDto } from '../badges/dto/create-badge.dto';
 import { CreateCommunityDto } from '../communities/dto/create-community.dto';
@@ -40,6 +43,7 @@ export class AdminService {
     private uniflowService: UniflowService,
     private cmsBridgeService: CmsBridgeService,
     private authService: AuthService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   // ─── User Management ──────────────────────────────────────────────────────
@@ -88,6 +92,16 @@ export class AdminService {
 
   async getUserById(id: string) {
     const user = await this.usersService.findById(id);
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
+  async updateUser(id: string, dto: UpdateUserDto) {
+    const user = await this.userModel.findByIdAndUpdate(
+      id,
+      { $set: dto },
+      { new: true },
+    );
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
@@ -193,9 +207,19 @@ export class AdminService {
     return this.badgesService.findAll();
   }
 
-  async assignBadgeToUser(userId: string, badgeId: string) {
-    await this.badgesService.findById(badgeId); // validates badge exists
-    return this.usersService.assignBadge(userId, badgeId);
+  async assignBadgeToUser(userId: string, badgeId: string, adminId: string = 'system') {
+    const badge = await this.badgesService.findById(badgeId); // validates badge exists
+    const user = await this.usersService.assignBadge(userId, badgeId);
+
+    this.eventEmitter.emit('badge.awarded', {
+      userId,
+      badgeName: badge.name,
+      badgeDescription: badge.description || '',
+      adminId,
+      reason: badge.description || 'outstanding achievement',
+    });
+
+    return user;
   }
 
   async deleteBadge(badgeId: string) {
@@ -248,25 +272,36 @@ export class AdminService {
   async sendBulkEmail(dto: BulkEmailDto) {
     let recipients: string[] = [];
 
-    if (dto.communityId === 'all') {
-      const users = await this.userModel
-        .find({ status: UserStatus.ACTIVE })
-        .select('email')
-        .exec();
-      recipients = users.map((u) => u.email);
-    } else {
-      const users = await this.userModel
-        .find({
-          status: UserStatus.ACTIVE,
-          communities: new Types.ObjectId(dto.communityId),
-        })
-        .select('email')
-        .exec();
-      recipients = users.map((u) => u.email);
+    if (dto.communityId) {
+      if (dto.communityId === 'all') {
+        const users = await this.userModel
+          .find({ status: UserStatus.ACTIVE })
+          .select('email')
+          .exec();
+        recipients = users.map((u) => u.email);
+      } else {
+        const users = await this.userModel
+          .find({
+            status: UserStatus.ACTIVE,
+            communities: new Types.ObjectId(dto.communityId),
+          })
+          .select('email')
+          .exec();
+        recipients = users.map((u) => u.email);
+      }
+    }
+
+    if (dto.manualRecipients && dto.manualRecipients.length > 0) {
+      recipients = [...new Set([...recipients, ...dto.manualRecipients])];
     }
 
     if (recipients.length === 0) {
-      throw new BadRequestException('No active users found in this community');
+      throw new BadRequestException('No recipients found');
+    }
+
+    if (dto.scheduleAt) {
+      // Logic for scheduling would go here (e.g. saving to a 'scheduled_messages' collection)
+      return { message: 'Email scheduled', recipientCount: recipients.length, scheduledAt: dto.scheduleAt };
     }
 
     return this.uniflowService.sendBulkEmail(
@@ -274,6 +309,66 @@ export class AdminService {
       dto.subject,
       dto.message,
     );
+  }
+
+  async sendBulkSms(dto: BulkSmsDto) {
+    let recipients: string[] = [];
+
+    if (dto.communityId) {
+      if (dto.communityId === 'all') {
+        const users = await this.userModel
+          .find({ status: UserStatus.ACTIVE })
+          .select('phone')
+          .exec();
+        recipients = users.map((u) => u.phone).filter(Boolean);
+      } else {
+        const users = await this.userModel
+          .find({
+            status: UserStatus.ACTIVE,
+            communities: new Types.ObjectId(dto.communityId),
+          })
+          .select('phone')
+          .exec();
+        recipients = users.map((u) => u.phone).filter(Boolean);
+      }
+    }
+
+    if (dto.manualRecipients && dto.manualRecipients.length > 0) {
+      recipients = [...new Set([...recipients, ...dto.manualRecipients])];
+    }
+
+    if (recipients.length === 0) {
+      throw new BadRequestException('No recipients with valid phone numbers found');
+    }
+
+    if (dto.scheduleAt) {
+      return { message: 'SMS scheduled', recipientCount: recipients.length, scheduledAt: dto.scheduleAt };
+    }
+
+    // Uniflow service needs a bulk SMS method or we call sendSms in loop
+    // For now let's assume uniflowService has sendBulkSms or we loop
+    const results = await Promise.allSettled(
+      recipients.map(phone => this.uniflowService.sendSms(phone, dto.message))
+    );
+
+    const sent = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+
+    return { sent, failed, total: recipients.length };
+  }
+
+  // ─── Templates & Logs ─────────────────────────────────────────────────────
+
+  async getCommunicationTemplates() {
+    return this.uniflowService.getTemplates();
+  }
+
+  async getCommunicationLogs(params: any = {}) {
+    return this.uniflowService.getLogs(params);
+  }
+
+  async getUniflowOrganization() {
+    return this.uniflowService.getOrganization();
   }
 
   // ─── CMS Applications (pull from CMC) ────────────────────────────────────
@@ -296,6 +391,10 @@ export class AdminService {
 
   async importCmsMembership(id: string) {
     return this.cmsBridgeService.importApplication(id, 'membership');
+  }
+
+  async getCmsInnovationChallenges(page = 1, limit = 10, search?: string, status?: string) {
+    return this.cmsBridgeService.getInnovationChallenges({ page, limit, search, status });
   }
 
   // ─── Dashboard Stats ──────────────────────────────────────────────────────

@@ -28,6 +28,26 @@ export class CmsBridgeService {
         'x-tenant-id': this.tenantId,
       },
     });
+
+    this.client.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        if (error.response?.status === 401 && !originalRequest._retry && originalRequest.headers?.Authorization) {
+          originalRequest._retry = true;
+          this.accessToken = null;
+          this.tokenExpiry = 0;
+          try {
+            const token = await this.getToken();
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return this.client(originalRequest);
+          } catch (retryErr: any) {
+            return Promise.reject(retryErr);
+          }
+        }
+        return Promise.reject(error);
+      },
+    );
   }
 
   // ─── Auth (service-account login to CMS) ──────────────────────────────────
@@ -320,6 +340,59 @@ export class CmsBridgeService {
     } catch (err) {
       this.logger.warn(`CMS getBlogPosts failed: ${err.message}`);
       return { data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } };
+    }
+  }
+
+  // ─── Innovation Challenges ────────────────────────────────────────────────
+
+  async getInnovationChallenges(params?: { page?: number; limit?: number; search?: string; status?: string }) {
+    try {
+      const page = params?.page || 1;
+      const limit = params?.limit || 10;
+      const search = params?.search;
+      const status = params?.status;
+
+      this.logger.log(`[CMS Bridge] Fetching innovation challenges from CMS (page: ${page}, limit: ${limit}, search: ${search}, status: ${status})...`);
+
+      const headers = await this.authHeaders();
+      const { data } = await this.client.get('/innovation-challenges', {
+        headers,
+        params: {
+          page,
+          limit,
+          search,
+          status: status && status !== 'all' ? status : undefined,
+        },
+      });
+
+      this.logger.log(`[CMS Bridge] Received ${data.data?.length || 0} innovation challenges. Total: ${data.total || 0}`);
+
+      return {
+        data: data.data || [],
+        meta: {
+          total: data.total || 0,
+          page: data.page || page,
+          limit: data.limit || limit,
+          totalPages: data.totalPages || Math.ceil((data.total || 0) / limit),
+        },
+      };
+    } catch (err: any) {
+      this.logger.error(`[CMS Bridge] getInnovationChallenges failed: ${err?.message || err}`);
+      throw err;
+    }
+  }
+
+  async getInnovationChallengeById(id: string) {
+    try {
+      this.logger.log(`[CMS Bridge] Fetching innovation challenge by ID from CMS: ${id}`);
+      const headers = await this.authHeaders();
+      const { data } = await this.client.get(`/innovation-challenges/${id}`, {
+        headers,
+      });
+      return data.data || data || null;
+    } catch (err: any) {
+      this.logger.error(`[CMS Bridge] getInnovationChallengeById failed: ${err?.message || err}`);
+      throw err;
     }
   }
 }

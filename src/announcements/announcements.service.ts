@@ -1,17 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   Announcement,
   AnnouncementDocument,
 } from './schemas/announcement.schema';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
+import { User, UserDocument, UserStatus } from '../users/schemas/user.schema';
 
 @Injectable()
 export class AnnouncementsService {
   constructor(
     @InjectModel(Announcement.name)
     private announcementModel: Model<AnnouncementDocument>,
+    @InjectModel(User.name)
+    private userModel: Model<UserDocument>,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async create(
@@ -25,11 +30,45 @@ export class AnnouncementsService {
       ? [] 
       : targetCommunityIds;
 
-    return this.announcementModel.create({
+    const announcement = await this.announcementModel.create({
       ...rest,
       targetCommunityIds: finalTargetIds,
       createdBy: new Types.ObjectId(createdById),
     });
+
+    try {
+      // Populate target communities to get community names
+      const populated = await announcement.populate('targetCommunityIds', 'name');
+
+      // Find recipients
+      let recipientUsers: UserDocument[] = [];
+      if (finalTargetIds.length === 0) {
+        recipientUsers = await this.userModel.find({ status: UserStatus.ACTIVE });
+      } else {
+        const objIds = finalTargetIds.map(id => new Types.ObjectId(id));
+        recipientUsers = await this.userModel.find({
+          status: UserStatus.ACTIVE,
+          communities: { $in: objIds },
+        });
+      }
+
+      const recipientIds = recipientUsers.map(u => u._id.toString());
+      const communityNames = populated.targetCommunityIds && populated.targetCommunityIds.length > 0
+        ? (populated.targetCommunityIds as any[]).map(c => c.name).join(', ')
+        : 'All Communities';
+
+      if (recipientIds.length > 0) {
+        this.eventEmitter.emit('announcement.created', {
+          announcement: populated,
+          communityName: communityNames,
+          recipientIds,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to emit announcement notification:', err);
+    }
+
+    return announcement;
   }
 
   async findAll(): Promise<AnnouncementDocument[]> {

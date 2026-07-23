@@ -24,9 +24,11 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UserRole, UserStatus } from '../users/schemas/user.schema';
 import {
   BulkEmailDto,
+  BulkSmsDto,
   CreateMemberDto,
   ListUsersQueryDto,
   AssignCommunityDto,
+  UpdateUserDto,
 } from './dto/admin.dto';
 import { CreateBadgeDto } from '../badges/dto/create-badge.dto';
 import { CreateCommunityDto } from '../communities/dto/create-community.dto';
@@ -66,6 +68,15 @@ export class AdminController {
   @ApiOperation({ summary: 'Manually create a member account' })
   createMember(@Body() dto: CreateMemberDto) {
     return this.adminService.createMember(dto);
+  }
+
+  @Patch('users/:id')
+  @ApiOperation({ summary: 'Update basic user details' })
+  updateUser(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+  ) {
+    return this.adminService.updateUser(id, dto);
   }
 
   @Patch('users/:id/status')
@@ -134,8 +145,10 @@ export class AdminController {
   assignBadge(
     @Param('id') userId: string,
     @Body('badgeId') badgeId: string,
+    @CurrentUser() admin: any,
   ) {
-    return this.adminService.assignBadgeToUser(userId, badgeId);
+    const adminId = admin._id ? admin._id.toString() : admin.sub;
+    return this.adminService.assignBadgeToUser(userId, badgeId, adminId);
   }
 
   @Delete('badges/:id')
@@ -200,6 +213,38 @@ export class AdminController {
     return this.adminService.sendBulkEmail(dto);
   }
 
+  @Post('communications/bulk-sms')
+  @ApiOperation({
+    summary:
+      'Send bulk SMS to a community via Uniflow (use communityId="all" for everyone)',
+  })
+  sendBulkSms(@Body() dto: BulkSmsDto) {
+    return this.adminService.sendBulkSms(dto);
+  }
+
+  @Get('communications/templates')
+  @ApiOperation({ summary: 'Get communication templates from Uniflow' })
+  getCommunicationTemplates() {
+    return this.adminService.getCommunicationTemplates();
+  }
+
+  @Get('communications/logs')
+  @ApiOperation({ summary: 'Get communication logs from Uniflow' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  getCommunicationLogs(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.adminService.getCommunicationLogs({ page, limit });
+  }
+
+  @Get('communications/organization')
+  @ApiOperation({ summary: 'Get Uniflow organization details' })
+  getUniflowOrganization() {
+    return this.adminService.getUniflowOrganization();
+  }
+
   // ─── CMS / CMC Application Sync ──────────────────────────────────────────
 
   @Get('cms/applications')
@@ -248,5 +293,20 @@ export class AdminController {
   @ApiOperation({ summary: 'Import a CMS membership into the Hub as a member' })
   importCmsMembership(@Param('id') id: string) {
     return this.adminService.importCmsMembership(id);
+  }
+
+  @Get('cms/innovation-challenges')
+  @ApiOperation({ summary: 'Pull innovation challenge applications from CMS' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'status', required: false })
+  getCmsInnovationChallenges(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.adminService.getCmsInnovationChallenges(+page, +limit, search, status);
   }
 }

@@ -10,6 +10,10 @@ import {
   FinalistJudgeScore,
   FinalistJudgeScoreDocument,
 } from './schemas/finalist-judge-score.schema';
+import {
+  FinalistShortlist,
+  FinalistShortlistDocument,
+} from './schemas/finalist-shortlist.schema';
 import { InnovationPhase2, InnovationPhase2Document } from './schemas/innovation-phase2.schema';
 import { InnovationChallengeApplication, InnovationChallengeApplicationDocument } from './schemas/innovation-challenge-application.schema';
 import { InnovationSettings, InnovationSettingsDocument } from './schemas/innovation-settings.schema';
@@ -36,6 +40,8 @@ export class JudgeService {
     private readonly scoreModel: Model<JudgeScoreDocument>,
     @InjectModel(FinalistJudgeScore.name)
     private readonly finalistScoreModel: Model<FinalistJudgeScoreDocument>,
+    @InjectModel(FinalistShortlist.name)
+    private readonly finalistShortlistModel: Model<FinalistShortlistDocument>,
     @InjectModel(InnovationPhase2.name)
     private readonly phase2Model: Model<InnovationPhase2Document>,
     @InjectModel(InnovationChallengeApplication.name)
@@ -74,10 +80,54 @@ export class JudgeService {
    * Return all Phase 2 submissions where matchStatus = "matched",
    * joined with their corresponding Phase 1 application.
    */
+  private normalizeText(value?: string | null) {
+    return (value || '').trim().toLowerCase();
+  }
+
+  private isApplicantMatchingShortlistEntry(applicant: any, entry: any) {
+    const candidateId = String(applicant?.id || '');
+    const entryId = String(entry?.applicantId || '');
+    const linkedId = String(entry?.linkedApplicantId || '');
+
+    if (candidateId && (candidateId === entryId || candidateId === linkedId)) {
+      return true;
+    }
+
+    const applicantName = this.normalizeText(applicant?.fullName);
+    const entryName = this.normalizeText(entry?.finalistName);
+    const projectTitle = this.normalizeText(applicant?.projectTitle);
+    const entryProjectTitle = this.normalizeText(entry?.projectTitle);
+    const organization = this.normalizeText(applicant?.organization);
+    const entryOrganization = this.normalizeText(entry?.organization);
+    const track = this.normalizeText(applicant?.challengeTrack);
+    const entryTrack = this.normalizeText(entry?.track);
+    const projectStage = this.normalizeText(applicant?.projectStage);
+    const entryStage = this.normalizeText(entry?.projectStage);
+    const phone = this.normalizeText(applicant?.phone);
+    const entryPhone = this.normalizeText(entry?.phoneNumber);
+
+    const nameMatch = applicantName && entryName && applicantName === entryName;
+    const projectMatch = projectTitle && entryProjectTitle && projectTitle === entryProjectTitle;
+    const organizationMatch = organization && entryOrganization && organization === entryOrganization;
+    const trackMatch = track && entryTrack && track === entryTrack;
+    const stageMatch = projectStage && entryStage && projectStage === entryStage;
+    const phoneMatch = phone && entryPhone && phone === entryPhone;
+
+    return Boolean(
+      nameMatch || projectMatch || phoneMatch ||
+      (nameMatch && organizationMatch) ||
+      (projectMatch && organizationMatch) ||
+      (projectMatch && trackMatch) ||
+      (nameMatch && stageMatch) ||
+      (organizationMatch && trackMatch),
+    );
+  }
+
   async getEligibleApplicants() {
-    const [matchedPhase2, phase1Apps] = await Promise.all([
+    const [matchedPhase2, phase1Apps, shortlistedEntries] = await Promise.all([
       this.phase2Model.find({ matchStatus: 'matched' }).lean().exec(),
       this.fetchAllPhase1Applications(),
+      this.finalistShortlistModel.find().lean().exec(),
     ]);
 
     const phase1Map = new Map<string, any>(
@@ -88,7 +138,9 @@ export class JudgeService {
       .map((p2) => {
         const p1 = p2.applicationId ? phase1Map.get(String(p2.applicationId)) : null;
         if (!p1) return null; // skip orphaned matches
-        return this.mergeApplicant(p2, p1);
+        const applicant = this.mergeApplicant(p2, p1);
+        const isShortlisted = shortlistedEntries.some((entry) => this.isApplicantMatchingShortlistEntry(applicant, entry));
+        return isShortlisted ? applicant : null;
       })
       .filter(Boolean);
 
@@ -97,14 +149,36 @@ export class JudgeService {
 
   /** Return a single merged applicant record */
   async getApplicantDetail(applicantId: string) {
-    const p2 = await this.phase2Model.findById(applicantId).lean().exec();
-    if (!p2 || p2.matchStatus !== 'matched') {
+    const [matchedPhase2, phase1Apps, shortlistedEntries] = await Promise.all([
+      this.phase2Model.find({ matchStatus: 'matched' }).lean().exec(),
+      this.fetchAllPhase1Applications(),
+      this.finalistShortlistModel.find().lean().exec(),
+    ]);
+
+    const phase1Map = new Map<string, any>(
+      phase1Apps.map((a) => [String(a._id || a.id), a]),
+    );
+
+    const shortlistedEntry = shortlistedEntries.find((entry) =>
+      String(entry?.applicantId || '') === applicantId || String(entry?.linkedApplicantId || '') === applicantId,
+    );
+
+    const mergedApplicant = matchedPhase2
+      .map((p2) => {
+        const p1 = p2.applicationId ? phase1Map.get(String(p2.applicationId)) : null;
+        if (!p1) return null;
+        const applicant = this.mergeApplicant(p2, p1);
+        const matchesRequestedId = String(applicant.id) === applicantId;
+        const matchesShortlist = Boolean(shortlistedEntry && this.isApplicantMatchingShortlistEntry(applicant, shortlistedEntry));
+        return matchesRequestedId || matchesShortlist ? applicant : null;
+      })
+      .find(Boolean);
+
+    if (!mergedApplicant) {
       throw new NotFoundException('Eligible applicant not found');
     }
 
-    const p1 = await this.lookupPhase1Application(p2);
-    if (!p1) throw new NotFoundException('Phase 1 application not found for this submission');
-    return this.mergeApplicant(p2, p1);
+    return mergedApplicant;
   }
 
   /**
@@ -278,10 +352,7 @@ export class JudgeService {
     return {
       hasSubmitted,
       myScore: myScore ?? null,
-      // Only reveal peer scores after own submission (blind scoring)
-      peerScores: hasSubmitted
-        ? scores.filter((s) => String(s.judgeId) !== requestingJudgeId)
-        : [],
+      peerScores: scores.filter((s) => String(s.judgeId) !== requestingJudgeId),
       totalJudges: scores.length,
       averageScore:
         scores.length > 0
@@ -302,9 +373,7 @@ export class JudgeService {
     return {
       hasSubmitted,
       myScore: myScore ?? null,
-      peerScores: hasSubmitted
-        ? scores.filter((s) => String(s.judgeId) !== requestingJudgeId)
-        : [],
+      peerScores: scores.filter((s) => String(s.judgeId) !== requestingJudgeId),
       totalJudges: scores.length,
       averageScore:
         scores.length > 0
@@ -388,10 +457,16 @@ export class JudgeService {
 
     const result: typeof rows = [];
     for (const [, trackRows] of byTrack) {
+      const getTimeValue = (value: string | null | undefined) => {
+        if (!value) return Number.MAX_SAFE_INTEGER;
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? Number.MAX_SAFE_INTEGER : parsed.getTime();
+      };
+
       // Sort by averageScore desc, then matchedAt asc (tie-break)
       trackRows.sort((a, b) => {
         if (b.averageScore !== a.averageScore) return b.averageScore - a.averageScore;
-        return new Date(a.matchedAt).getTime() - new Date(b.matchedAt).getTime();
+        return getTimeValue(a.matchedAt) - getTimeValue(b.matchedAt);
       });
 
       const isHealthTrack = (row: { track?: string }) => {
@@ -423,9 +498,17 @@ export class JudgeService {
     return { data: result, criteria: JUDGE_CRITERIA };
   }
 
+  async getFinalistShortlistEntries() {
+    return this.finalistShortlistModel.find().lean().exec();
+  }
+
   async getFinalistLeaderboard() {
-    const { data: applicants } = await this.getEligibleApplicants();
+    const shortlistedEntries = await this.getFinalistShortlistEntries();
     const allScores = await this.finalistScoreModel.find().lean().exec();
+    const matchedPhase2 = await this.phase2Model
+      .find({ matchStatus: 'matched' }, { _id: 1, phone: 1, orgName: 1 })
+      .lean()
+      .exec();
 
     const scoresByApplicant = new Map<string, any[]>();
     for (const s of allScores) {
@@ -434,18 +517,48 @@ export class JudgeService {
       scoresByApplicant.set(s.applicantId, list);
     }
 
-    const rows = applicants.map((a: any) => {
-      const scores = scoresByApplicant.get(a.id) ?? [];
+    const phoneToPhase2Id = new Map<string, string>();
+    for (const p2 of matchedPhase2) {
+      if (p2.phone) {
+        phoneToPhase2Id.set(this.normalizeText(p2.phone), String(p2._id));
+      }
+    }
+
+    const resolvePhase2Id = (entry: any): string | undefined => {
+      const normalizedPhone = this.normalizeText(entry.phoneNumber);
+      if (normalizedPhone && phoneToPhase2Id.has(normalizedPhone)) {
+        return phoneToPhase2Id.get(normalizedPhone);
+      }
+      if (entry.linkedApplicantId) {
+        return String(entry.linkedApplicantId);
+      }
+      return undefined;
+    };
+
+    const resolveScores = (entry: any): any[] => {
+      const ids = [
+        String(entry.applicantId),
+        resolvePhase2Id(entry),
+      ].filter(Boolean) as string[];
+      for (const id of ids) {
+        const found = scoresByApplicant.get(id);
+        if (found && found.length > 0) return found;
+      }
+      return [];
+    };
+
+    const rows = shortlistedEntries.map((entry: any) => {
+      const scores = resolveScores(entry);
       const avg =
         scores.length > 0
           ? Math.round((scores.reduce((acc, s) => acc + s.totalScore, 0) / scores.length) * 10) / 10
           : 0;
       return {
-        applicantId: a.id,
-        track: a.challengeTrack,
-        projectTitle: a.projectTitle,
-        organization: a.organization,
-        projectStage: a.projectStage,
+        applicantId: String(entry.applicantId),
+        track: entry.track,
+        projectTitle: entry.projectTitle,
+        organization: entry.organization,
+        projectStage: entry.projectStage,
         averageScore: avg,
         detailedScores: scores.map((s) => ({
           judgeName: s.judgeName || 'Judge',
@@ -454,9 +567,13 @@ export class JudgeService {
           remarks: s.remarks,
         })),
         judgeCount: scores.length,
-        matchedAt: a.matchedAt,
-        shortlisted: false,
+        matchedAt: entry.matchedAt ? new Date(entry.matchedAt).toISOString() : null,
+        shortlisted: entry.shortlisted ?? true,
         rank: 0,
+        finalistName: entry.finalistName,
+        phoneNumber: entry.phoneNumber,
+        originalRank: entry.originalRank,
+        rankOnFinalistList: entry.rankOnFinalistList,
       };
     });
 
@@ -469,9 +586,15 @@ export class JudgeService {
 
     const result: typeof rows = [];
     for (const [, trackRows] of byTrack) {
+      const getTimeValue = (value: string | null | undefined) => {
+        if (!value) return Number.MAX_SAFE_INTEGER;
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? Number.MAX_SAFE_INTEGER : parsed.getTime();
+      };
+
       trackRows.sort((a, b) => {
         if (b.averageScore !== a.averageScore) return b.averageScore - a.averageScore;
-        return new Date(a.matchedAt).getTime() - new Date(b.matchedAt).getTime();
+        return getTimeValue(a.matchedAt) - getTimeValue(b.matchedAt);
       });
 
       const isHealthTrack = (row: { track?: string }) => {
@@ -523,6 +646,10 @@ export class JudgeService {
       organization: r.organization,
       averageScore: r.averageScore,
       projectStage: r.projectStage,
+      finalistName: r.finalistName,
+      phoneNumber: r.phoneNumber,
+      rankOnFinalistList: r.rankOnFinalistList,
+      originalRank: r.originalRank,
     }));
 
     return { data: publicData, isPublicShortlistVisible: true };

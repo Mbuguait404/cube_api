@@ -9,6 +9,10 @@ import {
   FinalistJudgeScore,
   FinalistJudgeScoreSchema,
 } from './schemas/finalist-judge-score.schema';
+import {
+  FinalistShortlist,
+  FinalistShortlistSchema,
+} from './schemas/finalist-shortlist.schema';
 import { InnovationSettings, InnovationSettingsSchema } from './schemas/innovation-settings.schema';
 import { PublicVote, PublicVoteSchema } from './schemas/public-vote.schema';
 import { JudgeService } from './judge.service';
@@ -24,6 +28,7 @@ import { CmsBridgeModule } from '../integrations/cms-bridge/cms-bridge.module';
       { name: InnovationChallengeApplication.name, schema: InnovationChallengeApplicationSchema },
       { name: JudgeScore.name, schema: JudgeScoreSchema },
       { name: FinalistJudgeScore.name, schema: FinalistJudgeScoreSchema },
+      { name: FinalistShortlist.name, schema: FinalistShortlistSchema },
       { name: InnovationSettings.name, schema: InnovationSettingsSchema },
       { name: PublicVote.name, schema: PublicVoteSchema },
     ]),

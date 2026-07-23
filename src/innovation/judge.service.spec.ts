@@ -107,10 +107,10 @@ describe('JudgeService score visibility', () => {
     expect(result.data[0].shortlisted).toBe(true);
   });
 
-  it('maps finalist scores to the shortlist row even when the score uses a different applicant id', async () => {
+  it('maps finalist scores to the shortlist row when scores use the shortlist applicantId', async () => {
     const shortlistedEntries = [
       {
-        applicantId: 'shortlist-1',
+        applicantId: 'finalist-1',
         track: 'EdTech',
         finalistName: 'Ada Lovelace',
         phoneNumber: '0712345678',
@@ -119,15 +119,6 @@ describe('JudgeService score visibility', () => {
         projectStage: 'Prototype',
         matchedAt: '2026-07-23T00:00:00.000Z',
         shortlisted: true,
-      },
-    ];
-
-    const phase2Matches = [
-      {
-        _id: 'phase2-123',
-        phone: '0712345678',
-        matchStatus: 'matched',
-        applicationId: 'app-1',
       },
     ];
 
@@ -152,7 +143,7 @@ describe('JudgeService score visibility', () => {
         lean: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue([
             {
-              applicantId: 'phase2-123',
+              applicantId: 'finalist-1',
               judgeName: 'Jane Judge',
               totalScore: 84,
               scores: {},
@@ -163,39 +154,22 @@ describe('JudgeService score visibility', () => {
       }),
     } as any;
 
-    const phase2Model = {
+    const phase2ModelForTest3 = {
       find: jest.fn().mockReturnValue({
         lean: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(phase2Matches),
+          exec: jest.fn().mockResolvedValue([]),
         }),
       }),
-    } as any;
-
-    const cmsBridge = {
-      getInnovationChallenges: jest.fn().mockResolvedValue({
-        data: [
-          {
-            _id: 'app-1',
-            fullName: 'Ada Lovelace',
-            organization: 'UoN',
-            challengeTrack: 'EdTech',
-            projectTitle: 'StudyFlow',
-            projectStage: 'Prototype',
-          },
-        ],
-        meta: { total: 1 },
-      }),
-      getInnovationChallengeById: jest.fn(),
     } as any;
 
     const service = new JudgeService(
       scoreModel,
       finalistScoreModel,
       shortlistModel,
-      phase2Model,
+      phase2ModelForTest3,
       { find: jest.fn() } as any,
       { findOne: jest.fn(), create: jest.fn() } as any,
-      cmsBridge,
+      { getInnovationChallenges: jest.fn(), getInnovationChallengeById: jest.fn() } as any,
     );
 
     const result = await service.getFinalistLeaderboard();

@@ -47,10 +47,22 @@ export class JudgeController {
     return this.judgeService.getEligibleApplicants();
   }
 
+  @Get('finalists-applicants')
+  @ApiOperation({ summary: 'List all finalist applicants from the shortlist collection only' })
+  getFinalistsApplicants() {
+    return this.judgeService.getFinalistsOnlyApplicants();
+  }
+
   @Get('applicants/:id')
   @ApiOperation({ summary: 'Get a single merged applicant record' })
   getApplicant(@Param('id') id: string) {
     return this.judgeService.getApplicantDetail(id);
+  }
+
+  @Get('finalists-applicants/:id')
+  @ApiOperation({ summary: 'Get a single finalist applicant from the shortlist collection' })
+  getFinalistsApplicantDetail(@Param('id') id: string) {
+    return this.judgeService.getFinalistsOnlyApplicantDetail(id);
   }
 
   // ─── Scores ───────────────────────────────────────────────────────────────

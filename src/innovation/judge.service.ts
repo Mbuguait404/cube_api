@@ -84,20 +84,6 @@ export class JudgeService {
     return (value || '').trim().toLowerCase();
   }
 
-  private normalizePhone(value?: string | null): string {
-    const raw = (value || '').replace(/[^\d]/g, '');
-    if (raw.startsWith('0') && raw.length === 10) {
-      return '254' + raw.slice(1);
-    }
-    if (raw.startsWith('254') && raw.length === 12) {
-      return raw;
-    }
-    if (raw.length === 9) {
-      return '254' + raw;
-    }
-    return raw;
-  }
-
   private isApplicantMatchingShortlistEntry(applicant: any, entry: any) {
     const candidateId = String(applicant?.id || '');
     const entryId = String(entry?.applicantId || '');
@@ -266,6 +252,56 @@ export class JudgeService {
       earnedRevenue: p1.earnedRevenue,
       projectDuration: p1.projectDuration,
       commercializationStage: p1.commercializationStage,
+    };
+  }
+
+  // ─── Finalists-Only Applicants (from finalistshortlists collection) ─────────
+
+  /**
+   * Return all shortlist entries as applicants for the finalists judging view.
+   * Does NOT touch Phase 1 (CMS) or Phase 2 collections.
+   */
+  async getFinalistsOnlyApplicants() {
+    const entries = await this.getFinalistShortlistEntries();
+    const data = entries.map((entry: any) => this.mapShortlistToApplicant(entry));
+    return { data, total: data.length };
+  }
+
+  /**
+   * Return a single shortlist entry as an applicant for the finalists judging view.
+   */
+  async getFinalistsOnlyApplicantDetail(applicantId: string) {
+    const entry = await this.finalistShortlistModel.findOne({ applicantId }).lean().exec();
+    if (!entry) {
+      throw new NotFoundException('Finalist not found');
+    }
+    return this.mapShortlistToApplicant(entry);
+  }
+
+  private mapShortlistToApplicant(entry: any) {
+    return {
+      id: String(entry.applicantId),
+      fullName: entry.finalistName ?? '',
+      organization: entry.organization ?? '',
+      challengeTrack: entry.track ?? '',
+      projectTitle: entry.projectTitle ?? '',
+      projectStage: entry.projectStage ?? '',
+      phone: entry.phoneNumber ?? '',
+      email: '',
+      teamSize: null,
+      description: '',
+      orgName: entry.organization ?? '',
+      uploadedBy: '',
+      youtubeLink: '',
+      driveLink: '',
+      pitchedBefore: null,
+      raisedFunds: null,
+      commercialized: null,
+      earnedRevenue: null,
+      projectDuration: null,
+      commercializationStage: null,
+      matchedAt: entry.matchedAt ? new Date(entry.matchedAt).toISOString() : null,
+      createdAt: null,
     };
   }
 
@@ -519,10 +555,6 @@ export class JudgeService {
   async getFinalistLeaderboard() {
     const shortlistedEntries = await this.getFinalistShortlistEntries();
     const allScores = await this.finalistScoreModel.find().lean().exec();
-    const matchedPhase2 = await this.phase2Model
-      .find({ matchStatus: 'matched' }, { _id: 1, phone: 1, orgName: 1 })
-      .lean()
-      .exec();
 
     const scoresByApplicant = new Map<string, any[]>();
     for (const s of allScores) {
@@ -531,45 +563,10 @@ export class JudgeService {
       scoresByApplicant.set(s.applicantId, list);
     }
 
-    const phoneToPhase2Id = new Map<string, string>();
-    const orgToPhase2Ids = new Map<string, string[]>();
-    for (const p2 of matchedPhase2) {
-      const id = String(p2._id);
-      if (p2.phone) {
-        phoneToPhase2Id.set(this.normalizePhone(p2.phone), id);
-      }
-      if (p2.orgName) {
-        const key = this.normalizeText(p2.orgName);
-        const list = orgToPhase2Ids.get(key) ?? [];
-        list.push(id);
-        orgToPhase2Ids.set(key, list);
-      }
-    }
-
-    const resolvePhase2Id = (entry: any): string | undefined => {
-      if (entry.linkedApplicantId) {
-        return String(entry.linkedApplicantId);
-      }
-      if (entry.phoneNumber) {
-        const phoneKey = this.normalizePhone(entry.phoneNumber);
-        if (phoneKey && phoneToPhase2Id.has(phoneKey)) {
-          return phoneToPhase2Id.get(phoneKey);
-        }
-      }
-      if (entry.organization) {
-        const orgKey = this.normalizeText(entry.organization);
-        const candidates = orgToPhase2Ids.get(orgKey);
-        if (candidates && candidates.length === 1) {
-          return candidates[0];
-        }
-      }
-      return undefined;
-    };
-
     const resolveScores = (entry: any): any[] => {
       const ids = [
         String(entry.applicantId),
-        resolvePhase2Id(entry),
+        entry.linkedApplicantId ? String(entry.linkedApplicantId) : null,
       ].filter(Boolean) as string[];
       for (const id of ids) {
         const found = scoresByApplicant.get(id);

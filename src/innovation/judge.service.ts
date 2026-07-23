@@ -84,6 +84,20 @@ export class JudgeService {
     return (value || '').trim().toLowerCase();
   }
 
+  private normalizePhone(value?: string | null): string {
+    const raw = (value || '').replace(/[^\d]/g, '');
+    if (raw.startsWith('0') && raw.length === 10) {
+      return '254' + raw.slice(1);
+    }
+    if (raw.startsWith('254') && raw.length === 12) {
+      return raw;
+    }
+    if (raw.length === 9) {
+      return '254' + raw;
+    }
+    return raw;
+  }
+
   private isApplicantMatchingShortlistEntry(applicant: any, entry: any) {
     const candidateId = String(applicant?.id || '');
     const entryId = String(entry?.applicantId || '');
@@ -518,19 +532,36 @@ export class JudgeService {
     }
 
     const phoneToPhase2Id = new Map<string, string>();
+    const orgToPhase2Ids = new Map<string, string[]>();
     for (const p2 of matchedPhase2) {
+      const id = String(p2._id);
       if (p2.phone) {
-        phoneToPhase2Id.set(this.normalizeText(p2.phone), String(p2._id));
+        phoneToPhase2Id.set(this.normalizePhone(p2.phone), id);
+      }
+      if (p2.orgName) {
+        const key = this.normalizeText(p2.orgName);
+        const list = orgToPhase2Ids.get(key) ?? [];
+        list.push(id);
+        orgToPhase2Ids.set(key, list);
       }
     }
 
     const resolvePhase2Id = (entry: any): string | undefined => {
-      const normalizedPhone = this.normalizeText(entry.phoneNumber);
-      if (normalizedPhone && phoneToPhase2Id.has(normalizedPhone)) {
-        return phoneToPhase2Id.get(normalizedPhone);
-      }
       if (entry.linkedApplicantId) {
         return String(entry.linkedApplicantId);
+      }
+      if (entry.phoneNumber) {
+        const phoneKey = this.normalizePhone(entry.phoneNumber);
+        if (phoneKey && phoneToPhase2Id.has(phoneKey)) {
+          return phoneToPhase2Id.get(phoneKey);
+        }
+      }
+      if (entry.organization) {
+        const orgKey = this.normalizeText(entry.organization);
+        const candidates = orgToPhase2Ids.get(orgKey);
+        if (candidates && candidates.length === 1) {
+          return candidates[0];
+        }
       }
       return undefined;
     };

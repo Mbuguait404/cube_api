@@ -36,7 +36,9 @@ async function bootstrap(): Promise<void> {
       'http://localhost:8080',
       'https://cube-hub-website.vercel.app',
       'https://www.the-cube.co.ke',
-      'https://the-cube.co.ke'
+      'https://the-cube.co.ke',
+      'https://incubator.the-cube.co.ke',
+      'https://incubator-the-cube.vercel.app'
     ],
     credentials: true,
   });

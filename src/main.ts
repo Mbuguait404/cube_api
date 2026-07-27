@@ -28,6 +28,8 @@ async function bootstrap() {
       'https://cube-hub-website.vercel.app',
       'https://www.the-cube.co.ke',
       'https://the-cube.co.ke',
+      'https://incubator.the-cube.co.ke',
+      'https://incubator-the-cube.vercel.app',
       /^http:\/\/localhost:\d+$/,
       /^http:\/\/127\.0\.0\.1:\d+$/
     ],

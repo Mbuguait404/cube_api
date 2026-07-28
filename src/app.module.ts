@@ -26,6 +26,8 @@ import { FeedbackSubmissionsModule } from './feedback-submissions/feedback-submi
 import { SmeLoopFeedbackModule } from './sme-loop-feedback/sme-loop-feedback.module';
 import { CommunityHealthFeedbackModule } from './community-health-feedback/community-health-feedback.module';
 import { HackathonFeedbackModule } from './hackathon-feedback/hackathon-feedback.module';
+import { HealthEntrepreneurshipFeedbackModule } from './health-entrepreneurship-feedback/health-entrepreneurship-feedback.module';
+import { FeedbackUnlocksModule } from './feedback-unlocks/feedback-unlocks.module';
 import { IncubatorModule } from './incubator/incubator.module';
 
 @Module({
@@ -61,6 +63,8 @@ import { IncubatorModule } from './incubator/incubator.module';
     SmeLoopFeedbackModule,
     CommunityHealthFeedbackModule,
     HackathonFeedbackModule,
+    HealthEntrepreneurshipFeedbackModule,
+    FeedbackUnlocksModule,
   ],
   providers: [
     {

@@ -1,4 +1,5 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateHealthEntrepreneurshipFeedbackDto {
@@ -38,21 +39,25 @@ export class CreateHealthEntrepreneurshipFeedbackDto {
 
   @ApiPropertyOptional({ enum: ['1', '2', '3', '4', '5'] })
   @IsOptional()
+  @Transform(({ value }) => value || undefined)
   @IsEnum(['1', '2', '3', '4', '5'])
   ratingContent?: string;
 
   @ApiPropertyOptional({ enum: ['1', '2', '3', '4', '5'] })
   @IsOptional()
+  @Transform(({ value }) => value || undefined)
   @IsEnum(['1', '2', '3', '4', '5'])
   ratingFacilitation?: string;
 
   @ApiPropertyOptional({ enum: ['1', '2', '3', '4', '5'] })
   @IsOptional()
+  @Transform(({ value }) => value || undefined)
   @IsEnum(['1', '2', '3', '4', '5'])
   ratingParticipation?: string;
 
   @ApiPropertyOptional({ enum: ['1', '2', '3', '4', '5'] })
   @IsOptional()
+  @Transform(({ value }) => value || undefined)
   @IsEnum(['1', '2', '3', '4', '5'])
   ratingMethods?: string;
 

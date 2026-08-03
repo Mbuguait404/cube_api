@@ -1,31 +1,31 @@
-import { IsOptional, IsString, IsEnum } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, IsEnum, IsNotEmpty } from 'class-validator';
+import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 
 export class CreateSmeLoopGrandEmpirePreDto {
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
+  @IsNotEmpty()
   @IsString()
-  name?: string;
+  name!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   businessName?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
+  @IsNotEmpty()
   @IsString()
-  phone?: string;
+  phone!: string;
 
-  @ApiPropertyOptional({ enum: ['Male', 'Female', 'Prefer not to say'] })
-  @IsOptional()
+  @ApiProperty({ enum: ['Male', 'Female', 'Prefer not to say'] })
+  @IsNotEmpty()
   @IsEnum(['Male', 'Female', 'Prefer not to say'])
-  gender?: string;
+  gender!: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
+  @IsNotEmpty()
   @IsString()
-  county?: string;
+  county!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -37,10 +37,10 @@ export class CreateSmeLoopGrandEmpirePreDto {
   @IsString()
   occupation?: string;
 
-  @ApiPropertyOptional({ enum: ['Primary', 'Secondary', 'Certificate', 'Diploma', 'Degree', 'Postgraduate', 'Other'] })
-  @IsOptional()
+  @ApiProperty({ enum: ['Primary', 'Secondary', 'Certificate', 'Diploma', 'Degree', 'Postgraduate', 'Other'] })
+  @IsNotEmpty()
   @IsEnum(['Primary', 'Secondary', 'Certificate', 'Diploma', 'Degree', 'Postgraduate', 'Other'])
-  education?: string;
+  education!: string;
 
   @ApiPropertyOptional({ enum: ['Yes', 'No'] })
   @IsOptional()
@@ -67,10 +67,10 @@ export class CreateSmeLoopGrandEmpirePreDto {
   @IsString()
   biggestChallenge?: string;
 
-  @ApiPropertyOptional({ enum: ['None', 'Basic', 'Moderate', 'Advanced'] })
-  @IsOptional()
+  @ApiProperty({ enum: ['None', 'Basic', 'Moderate', 'Advanced'] })
+  @IsNotEmpty()
   @IsEnum(['None', 'Basic', 'Moderate', 'Advanced'])
-  knowledgeLevel?: string;
+  knowledgeLevel!: string;
 
   @ApiPropertyOptional({ enum: ['Yes', 'No'] })
   @IsOptional()
@@ -97,10 +97,10 @@ export class CreateSmeLoopGrandEmpirePreDto {
   @IsString()
   participationReason?: string;
 
-  @ApiPropertyOptional({ enum: ['Yes', 'No'] })
-  @IsOptional()
+  @ApiProperty({ enum: ['Yes', 'No'] })
+  @IsNotEmpty()
   @IsEnum(['Yes', 'No'])
-  attendanceCommitment?: string;
+  attendanceCommitment!: string;
 
   @ApiPropertyOptional()
   @IsOptional()

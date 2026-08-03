@@ -38,6 +38,12 @@ export class InnovationController {
     return this.judgeService.getPublicShortlist();
   }
 
+  @Get('settings')
+  @ApiOperation({ summary: 'Get innovation challenge public settings (Public)' })
+  getPublicSettings() {
+    return this.judgeService.getSettings();
+  }
+
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)

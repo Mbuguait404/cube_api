@@ -10,6 +10,15 @@ export class InnovationSettings {
 
   @Prop({ default: false })
   isPublicVotingOpen: boolean;
+
+  @Prop({ default: false })
+  isInnovationChallengeLocked: boolean;
+
+  @Prop({ default: false })
+  isJudgePortalLocked: boolean;
+
+  @Prop({ default: false })
+  isFinalistsJudgingLocked: boolean;
 }
 
 export const InnovationSettingsSchema = SchemaFactory.createForClass(InnovationSettings);

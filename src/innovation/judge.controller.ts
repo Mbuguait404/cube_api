@@ -147,7 +147,13 @@ export class JudgeController {
   @Patch('settings')
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Update innovation settings (Admin only)' })
-  updateSettings(@Body() body: { isPublicShortlistVisible?: boolean; isPublicVotingOpen?: boolean }) {
+  updateSettings(@Body() body: {
+    isPublicShortlistVisible?: boolean;
+    isPublicVotingOpen?: boolean;
+    isInnovationChallengeLocked?: boolean;
+    isJudgePortalLocked?: boolean;
+    isFinalistsJudgingLocked?: boolean;
+  }) {
     return this.judgeService.updateSettings(body);
   }
 }

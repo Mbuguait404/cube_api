@@ -708,7 +708,13 @@ export class JudgeService {
     return settings;
   }
 
-  async updateSettings(updates: { isPublicShortlistVisible?: boolean; isPublicVotingOpen?: boolean }) {
+  async updateSettings(updates: {
+    isPublicShortlistVisible?: boolean;
+    isPublicVotingOpen?: boolean;
+    isInnovationChallengeLocked?: boolean;
+    isJudgePortalLocked?: boolean;
+    isFinalistsJudgingLocked?: boolean;
+  }) {
     let settings = await this.settingsModel.findOne().exec();
     if (!settings) {
       settings = new this.settingsModel();
@@ -718,6 +724,15 @@ export class JudgeService {
     }
     if (updates.isPublicVotingOpen !== undefined) {
       (settings as any).isPublicVotingOpen = updates.isPublicVotingOpen;
+    }
+    if (updates.isInnovationChallengeLocked !== undefined) {
+      settings.isInnovationChallengeLocked = updates.isInnovationChallengeLocked;
+    }
+    if (updates.isJudgePortalLocked !== undefined) {
+      settings.isJudgePortalLocked = updates.isJudgePortalLocked;
+    }
+    if (updates.isFinalistsJudgingLocked !== undefined) {
+      settings.isFinalistsJudgingLocked = updates.isFinalistsJudgingLocked;
     }
     return settings.save();
   }

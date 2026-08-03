@@ -16,4 +16,6 @@ export class CreateCirisAttendeeDto {
   @IsOptional()
   @IsString()
   organization?: string;
+
+  consentDataUse?: boolean;
 }

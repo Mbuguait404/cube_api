@@ -19,6 +19,9 @@ export class CirisAttendee {
 
   @Prop({ trim: true })
   organization?: string;
+
+  @Prop({ default: false })
+  consentDataUse?: boolean;
 }
 
 export const CirisAttendeeSchema = SchemaFactory.createForClass(CirisAttendee);

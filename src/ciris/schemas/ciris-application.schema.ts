@@ -56,6 +56,12 @@ export class CirisApplication {
   @Prop({ enum: ['submitted', 'reviewed', 'shortlisted', 'rejected'], default: 'submitted' })
   status!: string;
 
+  @Prop({ default: false })
+  consentDataUse?: boolean;
+
+  @Prop({ default: false })
+  consentSharing?: boolean;
+
   @Prop({ default: null })
   submittedAt?: Date;
 }

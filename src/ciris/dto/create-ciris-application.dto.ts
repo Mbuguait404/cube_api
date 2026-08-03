@@ -56,4 +56,8 @@ export class CreateCirisApplicationDto {
   @IsOptional()
   @IsString()
   commercializationStage?: string;
+
+  consentDataUse?: boolean;
+
+  consentSharing?: boolean;
 }

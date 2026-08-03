@@ -29,6 +29,8 @@ import { HackathonFeedbackModule } from './hackathon-feedback/hackathon-feedback
 import { HealthEntrepreneurshipFeedbackModule } from './health-entrepreneurship-feedback/health-entrepreneurship-feedback.module';
 import { FeedbackUnlocksModule } from './feedback-unlocks/feedback-unlocks.module';
 import { PreTrainingQuestionnairesModule } from './pre-training-questionnaires/pre-training-questionnaires.module';
+import { SmeLoopGrandEmpireFeedbackModule } from './sme-loop-grand-empire-feedback/sme-loop-grand-empire-feedback.module';
+import { SmeLoopGrandEmpirePreModule } from './sme-loop-grand-empire-pre/sme-loop-grand-empire-pre.module';
 import { IncubatorModule } from './incubator/incubator.module';
 import { CirisModule } from './ciris/ciris.module';
 
@@ -68,6 +70,8 @@ import { CirisModule } from './ciris/ciris.module';
     HealthEntrepreneurshipFeedbackModule,
     FeedbackUnlocksModule,
     PreTrainingQuestionnairesModule,
+    SmeLoopGrandEmpireFeedbackModule,
+    SmeLoopGrandEmpirePreModule,
     CirisModule,
   ],
   providers: [

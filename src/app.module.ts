@@ -30,6 +30,7 @@ import { HealthEntrepreneurshipFeedbackModule } from './health-entrepreneurship-
 import { FeedbackUnlocksModule } from './feedback-unlocks/feedback-unlocks.module';
 import { PreTrainingQuestionnairesModule } from './pre-training-questionnaires/pre-training-questionnaires.module';
 import { IncubatorModule } from './incubator/incubator.module';
+import { CirisModule } from './ciris/ciris.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { IncubatorModule } from './incubator/incubator.module';
     HealthEntrepreneurshipFeedbackModule,
     FeedbackUnlocksModule,
     PreTrainingQuestionnairesModule,
+    CirisModule,
   ],
   providers: [
     {

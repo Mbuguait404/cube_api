@@ -11,6 +11,15 @@ export class SmeLoopGrandEmpireFeedback {
   @Prop({ trim: true })
   name?: string;
 
+  @Prop({ trim: true })
+  businessName?: string;
+
+  @Prop({ trim: true })
+  businessLocation?: string;
+
+  @Prop({ trim: true })
+  closestLandmark?: string;
+
   // Section A – Learning Reflection
   @Prop()
   keyLearnings?: string;

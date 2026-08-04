@@ -15,6 +15,21 @@ export class CreateSmeLoopGrandEmpireFeedbackDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  businessName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  businessLocation?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  closestLandmark?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   keyLearnings?: string;
 
   @ApiPropertyOptional()

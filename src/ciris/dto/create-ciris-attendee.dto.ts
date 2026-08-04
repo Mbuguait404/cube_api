@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsOptional } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsBoolean } from 'class-validator';
 
 export class CreateCirisAttendeeDto {
   @IsString()
@@ -17,5 +17,7 @@ export class CreateCirisAttendeeDto {
   @IsString()
   organization?: string;
 
+  @IsOptional()
+  @IsBoolean()
   consentDataUse?: boolean;
 }

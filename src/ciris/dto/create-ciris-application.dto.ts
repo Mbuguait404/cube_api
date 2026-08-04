@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsOptional, IsEnum, IsUrl } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsEnum, IsUrl, IsBoolean } from 'class-validator';
 
 const YesNo = ['Yes', 'No'] as const;
 
@@ -57,7 +57,11 @@ export class CreateCirisApplicationDto {
   @IsString()
   commercializationStage?: string;
 
+  @IsOptional()
+  @IsBoolean()
   consentDataUse?: boolean;
 
+  @IsOptional()
+  @IsBoolean()
   consentSharing?: boolean;
 }

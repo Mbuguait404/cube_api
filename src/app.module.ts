@@ -31,6 +31,7 @@ import { FeedbackUnlocksModule } from './feedback-unlocks/feedback-unlocks.modul
 import { PreTrainingQuestionnairesModule } from './pre-training-questionnaires/pre-training-questionnaires.module';
 import { SmeLoopGrandEmpireFeedbackModule } from './sme-loop-grand-empire-feedback/sme-loop-grand-empire-feedback.module';
 import { SmeLoopGrandEmpirePreModule } from './sme-loop-grand-empire-pre/sme-loop-grand-empire-pre.module';
+import { SmeLoopGrandEmpireKebsModule } from './sme-loop-grand-empire-kebs/sme-loop-grand-empire-kebs.module';
 import { IncubatorModule } from './incubator/incubator.module';
 import { CirisModule } from './ciris/ciris.module';
 
@@ -72,6 +73,7 @@ import { CirisModule } from './ciris/ciris.module';
     PreTrainingQuestionnairesModule,
     SmeLoopGrandEmpireFeedbackModule,
     SmeLoopGrandEmpirePreModule,
+    SmeLoopGrandEmpireKebsModule,
     CirisModule,
   ],
   providers: [
